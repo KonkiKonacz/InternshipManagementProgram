@@ -1,3 +1,10 @@
 <MudNavMenu>
     <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Strona główna</MudNavLink>
+    <AuthorizeView Roles="student">
+        <MudNavLink Href="/student" Icon="@Icons.Material.Filled.School">Panel studenta</MudNavLink>
+    </AuthorizeView>
+    <AuthorizeView Roles="admin">
+        <MudNavLink Href="/admin" Icon="@Icons.Material.Filled.AdminPanelSettings">Panel administratora</MudNavLink>
+        <MudNavLink Href="/admin/studenci" Icon="@Icons.Material.Filled.PeopleAlt">Studenci</MudNavLink>
+    </AuthorizeView>
 </MudNavMenu>

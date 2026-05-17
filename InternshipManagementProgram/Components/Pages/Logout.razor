@@ -1,0 +1,12 @@
+@page "/logout"
+@rendermode InteractiveServer
+@inject CustomAuthenticationStateProvider AuthProvider
+@inject NavigationManager Nav
+
+@code {
+    protected override void OnInitialized()
+    {
+        AuthProvider.Logout();
+        Nav.NavigateTo("/");
+    }
+}

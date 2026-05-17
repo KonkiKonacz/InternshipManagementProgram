@@ -1,0 +1,39 @@
+@page "/login"
+@rendermode InteractiveServer
+@inject CustomAuthenticationStateProvider AuthProvider
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>Logowanie</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-10">
+    <MudPaper Class="pa-8" Elevation="2">
+        <MudText Typo="Typo.h5" GutterBottom="true">Logowanie</MudText>
+        <MudText Typo="Typo.body2" Class="mb-4">Konta testowe: <b>admin / admin123</b> lub <b>student / student123</b>.</MudText>
+
+        <EditForm Model="this" OnValidSubmit="HandleLogin">
+            <MudTextField @bind-Value="Username" Label="Login" Variant="Variant.Outlined" Required="true" Class="mb-3"/>
+            <MudTextField @bind-Value="Password" Label="Hasło" Variant="Variant.Outlined" InputType="InputType.Password" Required="true" Class="mb-3"/>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true">Zaloguj</MudButton>
+        </EditForm>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private string Username { get; set; } = "";
+    private string Password { get; set; } = "";
+
+    private void HandleLogin()
+    {
+        if (AuthProvider.TryLogin(Username, Password))
+        {
+            Snackbar.Add($"Zalogowano jako {Username}.", Severity.Success);
+            var target = Username == "admin" ? "/admin" : "/student";
+            Nav.NavigateTo(target);
+        }
+        else
+        {
+            Snackbar.Add("Nieprawidłowy login lub hasło.", Severity.Error);
+        }
+    }
+}
