@@ -27,6 +27,8 @@ builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddAuthorizationCore();
 
+builder.Services.AddScoped<CertificateService>();
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

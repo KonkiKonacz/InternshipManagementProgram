@@ -5,6 +5,8 @@
 @inject AuthenticationStateProvider AuthProvider
 @inject NavigationManager Nav
 @inject ISnackbar Snackbar
+@inject CertificateService Certificates
+@inject IJSRuntime JS
 
 <PageTitle>Szczegóły praktyki</PageTitle>
 
@@ -73,8 +75,8 @@ else
         @if (_p.Status == "Zaliczona")
         {
             <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Download"
-                       Href="@($"/student/zaswiadczenie/{_p.Idpraktyki}")" Class="mt-4">
-                Pobierz zaświadczenie
+                       OnClick="PobierzZaswiadczenie" Disabled="_pdfBusy" Class="mt-4">
+                @(_pdfBusy ? "Generowanie..." : "Pobierz zaświadczenie")
             </MudButton>
         }
     </MudPaper>
@@ -85,6 +87,7 @@ else
 
     private VPraktykiPelne? _p;
     private bool _loading = true;
+    private bool _pdfBusy;
 
     protected override async Task OnInitializedAsync()
     {
@@ -100,6 +103,26 @@ else
         _p = await db.VPraktykiPelnes
             .FirstOrDefaultAsync(p => p.Idpraktyki == Id && p.NrAlbumu == nrAlbumu);
         _loading = false;
+    }
+
+    private async Task PobierzZaswiadczenie()
+    {
+        if (_p is null) return;
+        _pdfBusy = true;
+        try
+        {
+            var bytes = Certificates.GenerujZaswiadczenie(_p);
+            var fileName = $"Zaswiadczenie_praktyka_{_p.Idpraktyki}.pdf";
+            await JS.InvokeVoidAsync("downloadFileFromBase64", fileName, Convert.ToBase64String(bytes), "application/pdf");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Błąd generowania PDF: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _pdfBusy = false;
+        }
     }
 
     private static Color StatusColor(string status) => status switch
