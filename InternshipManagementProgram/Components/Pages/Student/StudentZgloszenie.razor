@@ -1,0 +1,150 @@
+@page "/student/zglos"
+@attribute [Authorize(Roles = "student")]
+@rendermode InteractiveServer
+@inject IDbContextFactory<PraktykiStudenckieContext> DbFactory
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>Zgłoszenie praktyki</PageTitle>
+
+<MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="/student" Class="mb-2">Wróć</MudButton>
+
+<MudPaper Class="pa-6" Elevation="1">
+    <MudText Typo="Typo.h5" GutterBottom="true">Zgłoszenie nowej praktyki</MudText>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Indeterminate="true"/>
+    }
+    else
+    {
+        <EditForm Model="this" OnValidSubmit="HandleSubmit">
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudSelect T="int?" @bind-Value="_idFirmy" Label="Firma" Variant="Variant.Outlined" Required="true">
+                        @foreach (var f in _firmy)
+                        {
+                            <MudSelectItem T="int?" Value="@((int?)f.Idfirmy)">@f.NazwaFirmy — @f.Miasto</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudSelect T="int?" @bind-Value="_idOpiekuna" Label="Opiekun" Variant="Variant.Outlined" Required="true">
+                        @foreach (var o in _opiekunowie)
+                        {
+                            <MudSelectItem T="int?" Value="@((int?)o.Idopiekuna)">@(o.Tytul ?? "") @o.Imie @o.Nazwisko</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudSelect T="int?" @bind-Value="_idOsoby" Label="Osoba kontaktowa (opcjonalnie)" Variant="Variant.Outlined" Clearable="true">
+                        @foreach (var o in OsobyDlaFirmy())
+                        {
+                            <MudSelectItem T="int?" Value="@((int?)o.Idosoby)">@o.Imie @o.Nazwisko (@(o.Stanowisko ?? "—"))</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_rodzaj" Label="Rodzaj praktyki" Variant="Variant.Outlined" Required="true" MaxLength="50"/>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudDatePicker @bind-Date="_dataRozp" Label="Data rozpoczęcia" Variant="Variant.Outlined" Required="true"/>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudDatePicker @bind-Date="_dataZak" Label="Data zakończenia" Variant="Variant.Outlined" Required="true"/>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="_submitting">
+                        @(_submitting ? "Wysyłanie..." : "Zgłoś praktykę")
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    }
+</MudPaper>
+
+@code {
+    private bool _loading = true;
+    private bool _submitting;
+
+    private List<Firma> _firmy = new();
+    private List<Opiekun> _opiekunowie = new();
+    private List<OsobaKontaktowa> _osoby = new();
+
+    private int? _idFirmy;
+    private int? _idOpiekuna;
+    private int? _idOsoby;
+    private string _rodzaj = "";
+    private DateTime? _dataRozp;
+    private DateTime? _dataZak;
+
+    private string? _nrAlbumu;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthProvider.GetAuthenticationStateAsync();
+        _nrAlbumu = state.User.FindFirst("NrAlbumu")?.Value;
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+        _firmy = await db.Firmas.OrderBy(f => f.NazwaFirmy).ToListAsync();
+        _opiekunowie = await db.Opiekuns.OrderBy(o => o.Nazwisko).ThenBy(o => o.Imie).ToListAsync();
+        _osoby = await db.OsobaKontaktowas.ToListAsync();
+        _loading = false;
+    }
+
+    private IEnumerable<OsobaKontaktowa> OsobyDlaFirmy()
+        => _idFirmy is null ? Enumerable.Empty<OsobaKontaktowa>() : _osoby.Where(o => o.Idfirmy == _idFirmy.Value);
+
+    private async Task HandleSubmit()
+    {
+        if (string.IsNullOrEmpty(_nrAlbumu))
+        {
+            Snackbar.Add("Brak numeru albumu w kontekście użytkownika.", Severity.Error);
+            return;
+        }
+        if (_idFirmy is null || _idOpiekuna is null || _dataRozp is null || _dataZak is null)
+        {
+            Snackbar.Add("Uzupełnij wymagane pola.", Severity.Warning);
+            return;
+        }
+
+        _submitting = true;
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            var idOsobyParam = _idOsoby.HasValue ? (object)_idOsoby.Value : DBNull.Value;
+
+            await db.Database.ExecuteSqlRawAsync(
+                "EXEC P_ZgloszeniePraktyki @NrAlbumu={0}, @IDFirmy={1}, @IDOpiekuna={2}, @RodzajPraktyki={3}, @DataRozpoczecia={4}, @DataZakonczenia={5}, @IDOsoby={6}",
+                _nrAlbumu,
+                _idFirmy.Value,
+                _idOpiekuna.Value,
+                _rodzaj,
+                DateOnly.FromDateTime(_dataRozp.Value),
+                DateOnly.FromDateTime(_dataZak.Value),
+                idOsobyParam);
+
+            Snackbar.Add("Praktyka zgłoszona.", Severity.Success);
+            Nav.NavigateTo("/student");
+        }
+        catch (Microsoft.Data.SqlClient.SqlException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Nieoczekiwany błąd: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+}

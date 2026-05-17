@@ -1,0 +1,86 @@
+@page "/student"
+@attribute [Authorize(Roles = "student")]
+@rendermode InteractiveServer
+@inject IDbContextFactory<PraktykiStudenckieContext> DbFactory
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>Moje praktyki</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudText Typo="Typo.h4">Moje praktyki</MudText>
+    <MudSpacer/>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Href="/student/zglos">Zgłoś praktykę</MudButton>
+</MudStack>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true"/>
+}
+else if (_praktyki.Count == 0)
+{
+    <MudAlert Severity="Severity.Info">Nie zgłosiłeś jeszcze żadnej praktyki.</MudAlert>
+}
+else
+{
+    <MudTable Items="_praktyki" Hover="true" Dense="true" Striped="true">
+        <HeaderContent>
+            <MudTh>ID</MudTh>
+            <MudTh>Data zgłoszenia</MudTh>
+            <MudTh>Firma</MudTh>
+            <MudTh>Rodzaj</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Ocena</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Idpraktyki</MudTd>
+            <MudTd>@context.DataZgloszenia.ToString("yyyy-MM-dd")</MudTd>
+            <MudTd>@context.NazwaFirmy</MudTd>
+            <MudTd>@context.RodzajPraktyki</MudTd>
+            <MudTd>
+                <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@context.Status</MudChip>
+            </MudTd>
+            <MudTd>@(context.Ocena?.ToString("0.0") ?? "—")</MudTd>
+            <MudTd>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" Href="@($"/student/praktyka/{context.Idpraktyki}")">Szczegóły</MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private List<VPraktykiPelne> _praktyki = new();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthProvider.GetAuthenticationStateAsync();
+        var nrAlbumu = state.User.FindFirst("NrAlbumu")?.Value;
+        if (string.IsNullOrEmpty(nrAlbumu))
+        {
+            Snackbar.Add("Brak numeru albumu w kontekście użytkownika.", Severity.Error);
+            _loading = false;
+            return;
+        }
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+        _praktyki = await db.VPraktykiPelnes
+            .Where(p => p.NrAlbumu == nrAlbumu)
+            .OrderByDescending(p => p.DataZgloszenia)
+            .ToListAsync();
+        _loading = false;
+    }
+
+    private static Color StatusColor(string status) => status switch
+    {
+        "Zgłoszona" => Color.Info,
+        "Zatwierdzona" => Color.Primary,
+        "Zakończona" => Color.Warning,
+        "Zaliczona" => Color.Success,
+        "Niezaliczona" => Color.Error,
+        "Odrzucona" => Color.Error,
+        _ => Color.Default
+    };
+}
