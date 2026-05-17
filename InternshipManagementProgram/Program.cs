@@ -1,18 +1,29 @@
 using InternshipManagementProgram.Components;
+using InternshipManagementProgram.Models;
+using Microsoft.EntityFrameworkCore;
+using MudBlazor.Services;
+using QuestPDF.Infrastructure;
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddMudServices();
+
+builder.Services.AddDbContextFactory<PraktykiStudenckieContext>(opt =>
+    opt.UseSqlServer(builder.Configuration.GetConnectionString("PraktykiStudenckie")));
+
+builder.Services.AddScoped<PraktykiStudenckieContext>(sp =>
+    sp.GetRequiredService<IDbContextFactory<PraktykiStudenckieContext>>().CreateDbContext());
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
