@@ -1,7 +1,6 @@
 using InternshipManagementProgram.Components;
 using InternshipManagementProgram.Models;
 using InternshipManagementProgram.Services;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using QuestPDF.Infrastructure;
@@ -21,12 +20,7 @@ builder.Services.AddDbContextFactory<PraktykiStudenckieContext>(opt =>
 builder.Services.AddScoped<PraktykiStudenckieContext>(sp =>
     sp.GetRequiredService<IDbContextFactory<PraktykiStudenckieContext>>().CreateDbContext());
 
-builder.Services.AddScoped<CustomAuthenticationStateProvider>();
-builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
-    sp.GetRequiredService<CustomAuthenticationStateProvider>());
-builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddAuthorizationCore();
-
+builder.Services.AddScoped<AppState>();
 builder.Services.AddScoped<CertificateService>();
 
 var app = builder.Build();

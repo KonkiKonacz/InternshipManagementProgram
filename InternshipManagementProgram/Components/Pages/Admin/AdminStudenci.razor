@@ -1,7 +1,8 @@
 @page "/admin/studenci"
-@attribute [Authorize(Roles = "admin")]
 @rendermode InteractiveServer
 @inject IDbContextFactory<PraktykiStudenckieContext> DbFactory
+@inject AppState AppState
+@inject NavigationManager Nav
 
 <PageTitle>Studenci</PageTitle>
 
@@ -92,6 +93,11 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        if (!AppState.IsAdmin)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
         await using var db = await DbFactory.CreateDbContextAsync();
         _bez = await db.VStudenciBezPraktyks.ToListAsync();
         _niezaliczeni = await db.VStudenciNiezaliczenis.ToListAsync();

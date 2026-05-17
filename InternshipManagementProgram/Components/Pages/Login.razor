@@ -1,39 +1,38 @@
 @page "/login"
 @rendermode InteractiveServer
-@inject CustomAuthenticationStateProvider AuthProvider
+@inject AppState AppState
 @inject NavigationManager Nav
-@inject ISnackbar Snackbar
 
 <PageTitle>Logowanie</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="mt-10">
     <MudPaper Class="pa-8" Elevation="2">
-        <MudText Typo="Typo.h5" GutterBottom="true">Logowanie</MudText>
-        <MudText Typo="Typo.body2" Class="mb-4">Konta testowe: <b>admin / admin123</b> lub <b>student / student123</b>.</MudText>
+        <MudText Typo="Typo.h5" GutterBottom="true">Logowanie (tryb demo)</MudText>
+        <MudText Typo="Typo.body2" Class="mb-6">Wybierz konto, którym chcesz się zalogować.</MudText>
 
-        <EditForm Model="this" OnValidSubmit="HandleLogin">
-            <MudTextField @bind-Value="Username" Label="Login" Variant="Variant.Outlined" Required="true" Class="mb-3"/>
-            <MudTextField @bind-Value="Password" Label="Hasło" Variant="Variant.Outlined" InputType="InputType.Password" Required="true" Class="mb-3"/>
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true">Zaloguj</MudButton>
-        </EditForm>
+        <MudStack Spacing="3">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                       StartIcon="@Icons.Material.Filled.School" OnClick="ZalogujStudenta">
+                Zaloguj jako student (nr albumu 62753)
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" FullWidth="true"
+                       StartIcon="@Icons.Material.Filled.AdminPanelSettings" OnClick="ZalogujAdmina">
+                Zaloguj jako administrator
+            </MudButton>
+        </MudStack>
     </MudPaper>
 </MudContainer>
 
 @code {
-    private string Username { get; set; } = "";
-    private string Password { get; set; } = "";
-
-    private void HandleLogin()
+    private void ZalogujStudenta()
     {
-        if (AuthProvider.TryLogin(Username, Password))
-        {
-            Snackbar.Add($"Zalogowano jako {Username}.", Severity.Success);
-            var target = Username == "admin" ? "/admin" : "/student";
-            Nav.NavigateTo(target);
-        }
-        else
-        {
-            Snackbar.Add("Nieprawidłowy login lub hasło.", Severity.Error);
-        }
+        AppState.LoginAsStudent();
+        Nav.NavigateTo("/student");
+    }
+
+    private void ZalogujAdmina()
+    {
+        AppState.LoginAsAdmin();
+        Nav.NavigateTo("/admin");
     }
 }

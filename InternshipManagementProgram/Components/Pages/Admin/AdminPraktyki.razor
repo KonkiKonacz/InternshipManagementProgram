@@ -1,9 +1,10 @@
 @page "/admin"
-@attribute [Authorize(Roles = "admin")]
 @rendermode InteractiveServer
 @inject IDbContextFactory<PraktykiStudenckieContext> DbFactory
 @inject IDialogService Dialog
 @inject ISnackbar Snackbar
+@inject AppState AppState
+@inject NavigationManager Nav
 
 <PageTitle>Panel administratora</PageTitle>
 
@@ -97,7 +98,15 @@ else
     private static readonly string[] _wszystkieStatusy =
         new[] { "Zgłoszona", "Zatwierdzona", "Odrzucona", "Zakończona", "Zaliczona", "Niezaliczona" };
 
-    protected override Task OnInitializedAsync() => Reload();
+    protected override async Task OnInitializedAsync()
+    {
+        if (!AppState.IsAdmin)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+        await Reload();
+    }
 
     private async Task Reload()
     {

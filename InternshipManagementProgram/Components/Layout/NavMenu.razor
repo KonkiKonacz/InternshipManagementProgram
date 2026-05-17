@@ -1,10 +1,20 @@
+@implements IDisposable
+@inject AppState AppState
+
 <MudNavMenu>
     <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Strona główna</MudNavLink>
-    <AuthorizeView Roles="student">
+    @if (AppState.IsStudent)
+    {
         <MudNavLink Href="/student" Icon="@Icons.Material.Filled.School">Panel studenta</MudNavLink>
-    </AuthorizeView>
-    <AuthorizeView Roles="admin">
+    }
+    @if (AppState.IsAdmin)
+    {
         <MudNavLink Href="/admin" Icon="@Icons.Material.Filled.AdminPanelSettings">Panel administratora</MudNavLink>
         <MudNavLink Href="/admin/studenci" Icon="@Icons.Material.Filled.PeopleAlt">Studenci</MudNavLink>
-    </AuthorizeView>
+    }
 </MudNavMenu>
+
+@code {
+    protected override void OnInitialized() => AppState.Changed += StateHasChanged;
+    public void Dispose() => AppState.Changed -= StateHasChanged;
+}
