@@ -1,0 +1,90 @@
+@inject IDbContextFactory<PraktykiStudenckieContext> DbFactory
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-2">Praktyka #@IdPraktyki, aktualny status: <b>@AktualnyStatus</b></MudText>
+
+        <MudSelect T="string" @bind-Value="_nowyStatus" Label="Nowy status" Variant="Variant.Outlined" Required="true" Class="mb-3">
+            @foreach (var s in _statusy)
+            {
+                <MudSelectItem T="string" Value="@s">@s</MudSelectItem>
+            }
+        </MudSelect>
+
+        @if (_nowyStatus == "Zatwierdzona")
+        {
+            <MudDatePicker @bind-Date="_dataRozp" Label="Data rozpoczęcia (wymagana)" Variant="Variant.Outlined" Required="true"/>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Anuluj">Anuluj</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Zatwierdz" Disabled="_busy">
+            @(_busy ? "Zapis..." : "Zapisz")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public int IdPraktyki { get; set; }
+    [Parameter] public string AktualnyStatus { get; set; } = "";
+    [Parameter] public DateOnly? AktualnaDataRozp { get; set; }
+
+    private string? _nowyStatus;
+    private DateTime? _dataRozp;
+    private bool _busy;
+
+    private static readonly string[] _statusy =
+        new[] { "Zgłoszona", "Zatwierdzona", "Odrzucona", "Zakończona", "Zaliczona", "Niezaliczona" };
+
+    protected override void OnInitialized()
+    {
+        _dataRozp = AktualnaDataRozp?.ToDateTime(TimeOnly.MinValue);
+    }
+
+    private void Anuluj() => MudDialog.Cancel();
+
+    private async Task Zatwierdz()
+    {
+        if (string.IsNullOrEmpty(_nowyStatus))
+        {
+            Snackbar.Add("Wybierz status.", Severity.Warning);
+            return;
+        }
+        if (_nowyStatus == "Zatwierdzona" && _dataRozp is null)
+        {
+            Snackbar.Add("Dla statusu Zatwierdzona pole Data rozpoczęcia jest wymagane.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            var dataParam = _dataRozp.HasValue
+                ? (object)DateOnly.FromDateTime(_dataRozp.Value)
+                : DBNull.Value;
+
+            await db.Database.ExecuteSqlRawAsync(
+                "EXEC P_ZmianaStatusu @IDPraktyki={0}, @NowyStatus={1}, @DataRozpoczecia={2}",
+                IdPraktyki, _nowyStatus, dataParam);
+
+            Snackbar.Add("Status zaktualizowany.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Microsoft.Data.SqlClient.SqlException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Nieoczekiwany błąd: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

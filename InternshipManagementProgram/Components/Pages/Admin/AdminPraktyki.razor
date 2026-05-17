@@ -1,0 +1,161 @@
+@page "/admin"
+@attribute [Authorize(Roles = "admin")]
+@rendermode InteractiveServer
+@inject IDbContextFactory<PraktykiStudenckieContext> DbFactory
+@inject IDialogService Dialog
+@inject ISnackbar Snackbar
+
+<PageTitle>Panel administratora</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Praktyki</MudText>
+
+<MudPaper Class="pa-4 mb-4" Elevation="0">
+    <MudGrid>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" @bind-Value="_filterStatus" Label="Status" Variant="Variant.Outlined" Clearable="true" Dense="true">
+                @foreach (var s in _wszystkieStatusy)
+                {
+                    <MudSelectItem T="string" Value="@s">@s</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudTextField @bind-Value="_filterNrAlbumu" Label="Nr albumu" Variant="Variant.Outlined" Clearable="true" />
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudTextField @bind-Value="_filterFirma" Label="Nazwa firmy" Variant="Variant.Outlined" Clearable="true" />
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudNumericField T="int?" @bind-Value="_filterSemestr" Label="Semestr" Variant="Variant.Outlined" Clearable="true" Min="1" Max="12" />
+        </MudItem>
+        <MudItem xs="12" md="1">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Reload" FullWidth="true" Class="mt-2">Odśwież</MudButton>
+        </MudItem>
+        <MudItem xs="12">
+            <MudTextField @bind-Value="_szukaj" Label="Szukaj (student lub firma)" Variant="Variant.Outlined"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Clearable="true" />
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true"/>
+}
+else
+{
+    <MudTable Items="Filtrowane()" Hover="true" Dense="true" Striped="true">
+        <HeaderContent>
+            <MudTh>ID</MudTh>
+            <MudTh>Student</MudTh>
+            <MudTh>Nr albumu</MudTh>
+            <MudTh>Sem.</MudTh>
+            <MudTh>Firma</MudTh>
+            <MudTh>Rodzaj</MudTh>
+            <MudTh>Daty</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Ocena</MudTh>
+            <MudTh>Akcje</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Idpraktyki</MudTd>
+            <MudTd>@context.ImieStudenta @context.NazwiskoStudenta</MudTd>
+            <MudTd>@context.NrAlbumu</MudTd>
+            <MudTd>@context.Semestr</MudTd>
+            <MudTd>@context.NazwaFirmy</MudTd>
+            <MudTd>@context.RodzajPraktyki</MudTd>
+            <MudTd>
+                @(context.DataRozpoczecia?.ToString("yyyy-MM-dd") ?? "—") /
+                @(context.DataZakonczenia?.ToString("yyyy-MM-dd") ?? "—")
+            </MudTd>
+            <MudTd>
+                <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@context.Status</MudChip>
+            </MudTd>
+            <MudTd>@(context.Ocena?.ToString("0.0") ?? "—")</MudTd>
+            <MudTd>
+                <MudStack Row="true" Spacing="1">
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="() => OtworzZmianeStatusu(context)">Status</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
+                               Disabled="@(context.Status != "Zakończona")"
+                               OnClick="() => OtworzWystawienieOceny(context)">Ocena</MudButton>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private List<VPraktykiPelne> _praktyki = new();
+    private bool _loading = true;
+
+    private string? _filterStatus;
+    private string? _filterNrAlbumu;
+    private string? _filterFirma;
+    private int? _filterSemestr;
+    private string? _szukaj;
+
+    private static readonly string[] _wszystkieStatusy =
+        new[] { "Zgłoszona", "Zatwierdzona", "Odrzucona", "Zakończona", "Zaliczona", "Niezaliczona" };
+
+    protected override Task OnInitializedAsync() => Reload();
+
+    private async Task Reload()
+    {
+        _loading = true;
+        await using var db = await DbFactory.CreateDbContextAsync();
+        _praktyki = await db.VPraktykiPelnes.OrderByDescending(p => p.DataZgloszenia).ToListAsync();
+        _loading = false;
+    }
+
+    private IEnumerable<VPraktykiPelne> Filtrowane()
+    {
+        IEnumerable<VPraktykiPelne> q = _praktyki;
+        if (!string.IsNullOrWhiteSpace(_filterStatus)) q = q.Where(p => p.Status == _filterStatus);
+        if (!string.IsNullOrWhiteSpace(_filterNrAlbumu)) q = q.Where(p => p.NrAlbumu.Contains(_filterNrAlbumu, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(_filterFirma)) q = q.Where(p => p.NazwaFirmy.Contains(_filterFirma, StringComparison.OrdinalIgnoreCase));
+        if (_filterSemestr is not null) q = q.Where(p => p.Semestr == _filterSemestr);
+        if (!string.IsNullOrWhiteSpace(_szukaj))
+        {
+            var s = _szukaj;
+            q = q.Where(p =>
+                p.ImieStudenta.Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                p.NazwiskoStudenta.Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                p.NazwaFirmy.Contains(s, StringComparison.OrdinalIgnoreCase));
+        }
+        return q;
+    }
+
+    private async Task OtworzZmianeStatusu(VPraktykiPelne p)
+    {
+        var parameters = new DialogParameters<ZmianaStatusuDialog>
+        {
+            { x => x.IdPraktyki, p.Idpraktyki },
+            { x => x.AktualnyStatus, p.Status },
+            { x => x.AktualnaDataRozp, p.DataRozpoczecia }
+        };
+        var dialog = await Dialog.ShowAsync<ZmianaStatusuDialog>("Zmiana statusu", parameters);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+            await Reload();
+    }
+
+    private async Task OtworzWystawienieOceny(VPraktykiPelne p)
+    {
+        var parameters = new DialogParameters<WystawienieOcenyDialog> { { x => x.IdPraktyki, p.Idpraktyki } };
+        var dialog = await Dialog.ShowAsync<WystawienieOcenyDialog>("Wystawienie oceny", parameters);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+            await Reload();
+    }
+
+    private static Color StatusColor(string status) => status switch
+    {
+        "Zgłoszona" => Color.Info,
+        "Zatwierdzona" => Color.Primary,
+        "Zakończona" => Color.Warning,
+        "Zaliczona" => Color.Success,
+        "Niezaliczona" => Color.Error,
+        "Odrzucona" => Color.Error,
+        _ => Color.Default
+    };
+}

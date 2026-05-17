@@ -1,0 +1,60 @@
+@inject IDbContextFactory<PraktykiStudenckieContext> DbFactory
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-2">Praktyka #@IdPraktyki</MudText>
+        <MudNumericField T="decimal?" @bind-Value="_ocena" Label="Ocena (2.0 - 5.0)" Variant="Variant.Outlined"
+                         Min="2.0m" Max="5.0m" Step="0.5m" Required="true"/>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Anuluj">Anuluj</MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="Zatwierdz" Disabled="_busy">
+            @(_busy ? "Zapis..." : "Wystaw ocenę")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public int IdPraktyki { get; set; }
+
+    private decimal? _ocena;
+    private bool _busy;
+
+    private void Anuluj() => MudDialog.Cancel();
+
+    private async Task Zatwierdz()
+    {
+        if (_ocena is null)
+        {
+            Snackbar.Add("Podaj ocenę.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            await db.Database.ExecuteSqlRawAsync(
+                "EXEC P_WystawienieOceny @IDPraktyki={0}, @Ocena={1}",
+                IdPraktyki, _ocena.Value);
+
+            Snackbar.Add("Ocena wystawiona.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Microsoft.Data.SqlClient.SqlException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Nieoczekiwany błąd: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

@@ -1,0 +1,100 @@
+@page "/admin/studenci"
+@attribute [Authorize(Roles = "admin")]
+@rendermode InteractiveServer
+@inject IDbContextFactory<PraktykiStudenckieContext> DbFactory
+
+<PageTitle>Studenci</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Studenci</MudText>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true"/>
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" GutterBottom="true">Bez praktyk (V_StudenciBezPraktyk)</MudText>
+                @if (_bez.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">Brak rekordów.</MudAlert>
+                }
+                else
+                {
+                    <MudTable Items="_bez" Hover="true" Dense="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Nr albumu</MudTh>
+                            <MudTh>Imię</MudTh>
+                            <MudTh>Nazwisko</MudTh>
+                            <MudTh>Sem.</MudTh>
+                            <MudTh>Kierunek</MudTh>
+                            <MudTh>Wydział</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.NrAlbumu</MudTd>
+                            <MudTd>@context.Imie</MudTd>
+                            <MudTd>@context.Nazwisko</MudTd>
+                            <MudTd>@context.Semestr</MudTd>
+                            <MudTd>@context.NazwaKierunku</MudTd>
+                            <MudTd>@context.NazwaWydzialu</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" GutterBottom="true">Niezaliczeni (V_StudenciNiezaliczeni)</MudText>
+                @if (_niezaliczeni.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">Brak rekordów.</MudAlert>
+                }
+                else
+                {
+                    <MudTable Items="_niezaliczeni" Hover="true" Dense="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Nr albumu</MudTh>
+                            <MudTh>Imię</MudTh>
+                            <MudTh>Nazwisko</MudTh>
+                            <MudTh>Sem.</MudTh>
+                            <MudTh>Kierunek</MudTh>
+                            <MudTh>Firma</MudTh>
+                            <MudTh>Ocena</MudTh>
+                            <MudTh>Daty</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.NrAlbumu</MudTd>
+                            <MudTd>@context.Imie</MudTd>
+                            <MudTd>@context.Nazwisko</MudTd>
+                            <MudTd>@context.Semestr</MudTd>
+                            <MudTd>@context.NazwaKierunku</MudTd>
+                            <MudTd>@context.NazwaFirmy</MudTd>
+                            <MudTd>@(context.Ocena?.ToString("0.0") ?? "—")</MudTd>
+                            <MudTd>
+                                @(context.DataRozpoczecia?.ToString("yyyy-MM-dd") ?? "—") /
+                                @(context.DataZakonczenia?.ToString("yyyy-MM-dd") ?? "—")
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private bool _loading = true;
+    private List<VStudenciBezPraktyk> _bez = new();
+    private List<VStudenciNiezaliczeni> _niezaliczeni = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        _bez = await db.VStudenciBezPraktyks.ToListAsync();
+        _niezaliczeni = await db.VStudenciNiezaliczenis.ToListAsync();
+        _loading = false;
+    }
+}
