@@ -5,69 +5,91 @@
 @inject NavigationManager Nav
 @inject ISnackbar Snackbar
 
-<PageTitle>Zgłoszenie praktyki</PageTitle>
+<PageTitle>Nowe zgloszenie - PraktykiStud</PageTitle>
 
-<MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="/student" Class="mb-2">Wróć</MudButton>
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Zgloszenie nowej praktyki</h1>
+        <p class="page-sub">Wypelnij dane praktyki - po wyslaniu zgloszenie trafia do pelnomocnika ds. praktyk.</p>
+    </div>
+    <div class="row">
+        <a class="btn btn-text" href="/student">
+            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Size="Size.Small" /> Wroc do listy
+        </a>
+    </div>
+</div>
 
-<MudPaper Class="pa-6" Elevation="1">
-    <MudText Typo="Typo.h5" GutterBottom="true">Zgłoszenie nowej praktyki</MudText>
-
-    @if (_loading)
-    {
-        <MudProgressLinear Indeterminate="true"/>
-    }
-    else
-    {
-        <EditForm Model="this" OnValidSubmit="HandleSubmit">
-            <MudGrid>
-                <MudItem xs="12" md="6">
-                    <MudSelect T="int?" @bind-Value="_idFirmy" Label="Firma" Variant="Variant.Outlined" Required="true">
+<div class="card">
+    <div class="card-body">
+        @if (_loading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else
+        {
+            <div class="form-grid">
+                <div class="form-field required full">
+                    <label>Firma / Instytucja</label>
+                    <select class="field" @bind="_idFirmy">
+                        <option value="">— wybierz firme —</option>
                         @foreach (var f in _firmy)
                         {
-                            <MudSelectItem T="int?" Value="@((int?)f.Idfirmy)">@f.NazwaFirmy — @f.Miasto</MudSelectItem>
+                            <option value="@f.Idfirmy">@f.NazwaFirmy - @f.Miasto</option>
                         }
-                    </MudSelect>
-                </MudItem>
+                    </select>
+                    <span class="hint">Lista zatwierdzonych firm partnerskich uczelni.</span>
+                </div>
 
-                <MudItem xs="12" md="6">
-                    <MudSelect T="int?" @bind-Value="_idOpiekuna" Label="Opiekun" Variant="Variant.Outlined" Required="true">
+                <div class="form-field required">
+                    <label>Opiekun praktyki (uczelniany)</label>
+                    <select class="field" @bind="_idOpiekuna">
+                        <option value="">— wybierz opiekuna —</option>
                         @foreach (var o in _opiekunowie)
                         {
-                            <MudSelectItem T="int?" Value="@((int?)o.Idopiekuna)">@(o.Tytul ?? "") @o.Imie @o.Nazwisko</MudSelectItem>
+                            <option value="@o.Idopiekuna">@(o.Tytul ?? "") @o.Imie @o.Nazwisko</option>
                         }
-                    </MudSelect>
-                </MudItem>
+                    </select>
+                </div>
 
-                <MudItem xs="12" md="6">
-                    <MudSelect T="int?" @bind-Value="_idOsoby" Label="Osoba kontaktowa (opcjonalnie)" Variant="Variant.Outlined" Clearable="true">
+                <div class="form-field">
+                    <label>Osoba kontaktowa w firmie (opcjonalnie)</label>
+                    <select class="field" @bind="_idOsoby" disabled="@(_idFirmy is null)">
+                        <option value="">— brak / wybierz po wyborze firmy —</option>
                         @foreach (var o in OsobyDlaFirmy())
                         {
-                            <MudSelectItem T="int?" Value="@((int?)o.Idosoby)">@o.Imie @o.Nazwisko (@(o.Stanowisko ?? "—"))</MudSelectItem>
+                            <option value="@o.Idosoby">@o.Imie @o.Nazwisko (@(o.Stanowisko ?? "—"))</option>
                         }
-                    </MudSelect>
-                </MudItem>
+                    </select>
+                </div>
 
-                <MudItem xs="12" md="6">
-                    <MudTextField @bind-Value="_rodzaj" Label="Rodzaj praktyki" Variant="Variant.Outlined" Required="true" MaxLength="50"/>
-                </MudItem>
+                <div class="form-field required">
+                    <label>Rodzaj praktyki</label>
+                    <input class="field" maxlength="50" @bind="_rodzaj" placeholder="np. Obowiazkowa, Wakacyjna..." />
+                </div>
 
-                <MudItem xs="12" md="6">
-                    <MudDatePicker @bind-Date="_dataRozp" Label="Data rozpoczęcia" Variant="Variant.Outlined" Required="true"/>
-                </MudItem>
+                <div class="form-field"></div>
 
-                <MudItem xs="12" md="6">
-                    <MudDatePicker @bind-Date="_dataZak" Label="Data zakończenia" Variant="Variant.Outlined" Required="true"/>
-                </MudItem>
+                <div class="form-field required">
+                    <label>Data rozpoczecia</label>
+                    <input class="field" type="date" @bind="_dataRozp" />
+                </div>
 
-                <MudItem xs="12">
-                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="_submitting">
-                        @(_submitting ? "Wysyłanie..." : "Zgłoś praktykę")
-                    </MudButton>
-                </MudItem>
-            </MudGrid>
-        </EditForm>
-    }
-</MudPaper>
+                <div class="form-field required">
+                    <label>Data zakonczenia</label>
+                    <input class="field" type="date" @bind="_dataZak" />
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a class="btn btn-text" href="/student">Anuluj</a>
+                <button class="btn btn-primary" @onclick="HandleSubmit" disabled="@(_submitting || !IsValid)">
+                    <MudIcon Icon="@Icons.Material.Filled.Send" Size="Size.Small" />
+                    @(_submitting ? "Wysylanie..." : "Wyslij do akceptacji")
+                </button>
+            </div>
+        }
+    </div>
+</div>
 
 @code {
     private bool _loading = true;
@@ -83,6 +105,10 @@
     private string _rodzaj = "";
     private DateTime? _dataRozp;
     private DateTime? _dataZak;
+
+    private bool IsValid => _idFirmy is not null && _idOpiekuna is not null
+        && !string.IsNullOrWhiteSpace(_rodzaj)
+        && _dataRozp is not null && _dataZak is not null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -107,14 +133,10 @@
         var nrAlbumu = AppState.NrAlbumu;
         if (string.IsNullOrEmpty(nrAlbumu))
         {
-            Snackbar.Add("Brak numeru albumu w kontekście użytkownika.", Severity.Error);
+            Snackbar.Add("Brak numeru albumu w kontekscie uzytkownika.", Severity.Error);
             return;
         }
-        if (_idFirmy is null || _idOpiekuna is null || _dataRozp is null || _dataZak is null)
-        {
-            Snackbar.Add("Uzupełnij wymagane pola.", Severity.Warning);
-            return;
-        }
+        if (!IsValid) return;
 
         _submitting = true;
         try
@@ -125,14 +147,14 @@
             await db.Database.ExecuteSqlRawAsync(
                 "EXEC P_ZgloszeniePraktyki @NrAlbumu={0}, @IDFirmy={1}, @IDOpiekuna={2}, @RodzajPraktyki={3}, @DataRozpoczecia={4}, @DataZakonczenia={5}, @IDOsoby={6}",
                 nrAlbumu,
-                _idFirmy.Value,
-                _idOpiekuna.Value,
+                _idFirmy!.Value,
+                _idOpiekuna!.Value,
                 _rodzaj,
-                DateOnly.FromDateTime(_dataRozp.Value),
-                DateOnly.FromDateTime(_dataZak.Value),
+                DateOnly.FromDateTime(_dataRozp!.Value),
+                DateOnly.FromDateTime(_dataZak!.Value),
                 idOsobyParam);
 
-            Snackbar.Add("Praktyka zgłoszona.", Severity.Success);
+            Snackbar.Add("Praktyka zgloszona - czeka na akceptacje pelnomocnika.", Severity.Success);
             Nav.NavigateTo("/student");
         }
         catch (Microsoft.Data.SqlClient.SqlException ex)
@@ -141,7 +163,7 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Nieoczekiwany błąd: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Nieoczekiwany blad: {ex.Message}", Severity.Error);
         }
         finally
         {

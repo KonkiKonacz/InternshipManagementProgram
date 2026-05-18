@@ -1,0 +1,35 @@
+@inject NavigationManager Nav
+@implements IDisposable
+
+<a class="nav-item @(IsActive ? "active" : "")" href="@Href">
+    <span class="ic"><MudIcon Icon="@Icon" Size="Size.Small" /></span>
+    <span class="nav-label">@Label</span>
+    @if (Badge.HasValue)
+    {
+        <span class="badge-count">@Badge.Value</span>
+    }
+</a>
+
+@code {
+    [Parameter, EditorRequired] public string Href { get; set; } = "";
+    [Parameter, EditorRequired] public string Icon { get; set; } = "";
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+    [Parameter] public int? Badge { get; set; }
+    [Parameter] public NavLinkMatch Match { get; set; } = NavLinkMatch.Prefix;
+
+    private bool IsActive
+    {
+        get
+        {
+            var current = "/" + Nav.ToBaseRelativePath(Nav.Uri).TrimEnd('/');
+            var target = Href.TrimEnd('/');
+            if (target == "") target = "/";
+            if (Match == NavLinkMatch.All) return current == target;
+            return current == target || current.StartsWith(target + "/");
+        }
+    }
+
+    protected override void OnInitialized() => Nav.LocationChanged += OnLoc;
+    private void OnLoc(object? s, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) => InvokeAsync(StateHasChanged);
+    public void Dispose() => Nav.LocationChanged -= OnLoc;
+}

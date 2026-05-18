@@ -1,35 +1,30 @@
 @inherits LayoutComponentBase
 @implements IDisposable
 @inject AppState AppState
+@inject NavigationManager Nav
 
-<MudThemeProvider/>
-<MudPopoverProvider/>
-<MudDialogProvider/>
-<MudSnackbarProvider/>
+<MudThemeProvider Theme="_theme" IsDarkMode="true" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-<MudLayout>
-    <MudAppBar Elevation="1" Color="Color.Primary">
-        <MudText Typo="Typo.h6">PraktykiApp</MudText>
-        <MudSpacer/>
-        @if (AppState.IsLoggedIn)
-        {
-            <MudText Typo="Typo.body2" Class="mr-3">@AppState.Username</MudText>
-            <MudButton Variant="Variant.Outlined" Color="Color.Inherit" Href="/logout" StartIcon="@Icons.Material.Filled.Logout">Wyloguj</MudButton>
-        }
-        else
-        {
-            <MudButton Variant="Variant.Outlined" Color="Color.Inherit" Href="/login" StartIcon="@Icons.Material.Filled.Login">Zaloguj</MudButton>
-        }
-    </MudAppBar>
-    <MudDrawer Open="true" Elevation="1" Variant="@DrawerVariant.Mini" OpenMiniOnHover="true">
-        <NavMenu/>
-    </MudDrawer>
-    <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.False" Class="pa-6">
-            @Body
-        </MudContainer>
-    </MudMainContent>
-</MudLayout>
+@if (!AppState.IsLoggedIn)
+{
+    @* Login i strony publiczne renderujemy bez sidebar/topbar *@
+    @Body
+}
+else
+{
+    <div class="app">
+        <Sidebar />
+        <main class="main">
+            <Topbar />
+            <div class="content">
+                @Body
+            </div>
+        </main>
+    </div>
+}
 
 <div id="blazor-error-ui" data-nosnippet>
     Wystąpił nieoczekiwany błąd.
@@ -38,6 +33,45 @@
 </div>
 
 @code {
-    protected override void OnInitialized() => AppState.Changed += StateHasChanged;
-    public void Dispose() => AppState.Changed -= StateHasChanged;
+    private static readonly MudTheme _theme = new()
+    {
+        PaletteDark = new PaletteDark
+        {
+            Primary = "#36b24c",
+            Secondary = "#f0c419",
+            Tertiary = "#1f2f5e",
+            Success = "#4ac255",
+            Error = "#f15463",
+            Info = "#4d8df6",
+            Warning = "#f0c419",
+            Background = "#131c34",
+            Surface = "#1a2547",
+            DrawerBackground = "#0e1530",
+            AppbarBackground = "#131c34",
+            TextPrimary = "rgba(255,255,255,0.94)",
+            TextSecondary = "rgba(220,228,248,0.62)",
+            ActionDefault = "rgba(255,255,255,0.62)",
+            LinesDefault = "rgba(255,255,255,0.07)",
+            TableLines = "rgba(255,255,255,0.07)",
+            DividerLight = "rgba(255,255,255,0.07)",
+            ActionDisabled = "rgba(220,228,248,0.38)",
+            ActionDisabledBackground = "rgba(255,255,255,0.04)",
+        },
+        Typography = new Typography
+        {
+            Default = new DefaultTypography
+            {
+                FontFamily = new[] { "Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif" }
+            }
+        }
+    };
+
+    protected override void OnInitialized()
+    {
+        AppState.Changed += OnChanged;
+    }
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => AppState.Changed -= OnChanged;
 }

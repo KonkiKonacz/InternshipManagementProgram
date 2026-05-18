@@ -6,83 +6,206 @@
 @inject AppState AppState
 @inject NavigationManager Nav
 
-<PageTitle>Panel administratora</PageTitle>
+<PageTitle>Praktyki - PraktykiStud</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">Praktyki</MudText>
-
-<MudPaper Class="pa-4 mb-4" Elevation="0">
-    <MudGrid>
-        <MudItem xs="12" md="3">
-            <MudSelect T="string" @bind-Value="_filterStatus" Label="Status" Variant="Variant.Outlined" Clearable="true" Dense="true">
-                @foreach (var s in _wszystkieStatusy)
-                {
-                    <MudSelectItem T="string" Value="@s">@s</MudSelectItem>
-                }
-            </MudSelect>
-        </MudItem>
-        <MudItem xs="12" md="3">
-            <MudTextField @bind-Value="_filterNrAlbumu" Label="Nr albumu" Variant="Variant.Outlined" Clearable="true" />
-        </MudItem>
-        <MudItem xs="12" md="3">
-            <MudTextField @bind-Value="_filterFirma" Label="Nazwa firmy" Variant="Variant.Outlined" Clearable="true" />
-        </MudItem>
-        <MudItem xs="12" md="2">
-            <MudNumericField T="int?" @bind-Value="_filterSemestr" Label="Semestr" Variant="Variant.Outlined" Clearable="true" Min="1" Max="12" />
-        </MudItem>
-        <MudItem xs="12" md="1">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Reload" FullWidth="true" Class="mt-2">Odśwież</MudButton>
-        </MudItem>
-        <MudItem xs="12">
-            <MudTextField @bind-Value="_szukaj" Label="Szukaj (student lub firma)" Variant="Variant.Outlined"
-                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Clearable="true" />
-        </MudItem>
-    </MudGrid>
-</MudPaper>
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Wszystkie praktyki</h1>
+        <p class="page-sub">
+            @if (!_loading)
+            {
+                <text>@_praktyki.Count praktyk w bazie. <strong style="color:var(--text-primary)">@_kpiOczekuje</strong> wymaga akceptacji.</text>
+            }
+            else { <text>Wczytywanie...</text> }
+        </p>
+    </div>
+</div>
 
 @if (_loading)
 {
-    <MudProgressLinear Indeterminate="true"/>
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
 }
 else
 {
-    <MudTable Items="Filtrowane()" Hover="true" Dense="true" Striped="true">
-        <HeaderContent>
-            <MudTh>ID</MudTh>
-            <MudTh>Student</MudTh>
-            <MudTh>Nr albumu</MudTh>
-            <MudTh>Sem.</MudTh>
-            <MudTh>Firma</MudTh>
-            <MudTh>Rodzaj</MudTh>
-            <MudTh>Daty</MudTh>
-            <MudTh>Status</MudTh>
-            <MudTh>Ocena</MudTh>
-            <MudTh>Akcje</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd>@context.Idpraktyki</MudTd>
-            <MudTd>@context.ImieStudenta @context.NazwiskoStudenta</MudTd>
-            <MudTd>@context.NrAlbumu</MudTd>
-            <MudTd>@context.Semestr</MudTd>
-            <MudTd>@context.NazwaFirmy</MudTd>
-            <MudTd>@context.RodzajPraktyki</MudTd>
-            <MudTd>
-                @(context.DataRozpoczecia?.ToString("yyyy-MM-dd") ?? "—") /
-                @(context.DataZakonczenia?.ToString("yyyy-MM-dd") ?? "—")
-            </MudTd>
-            <MudTd>
-                <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@context.Status</MudChip>
-            </MudTd>
-            <MudTd>@(context.Ocena?.ToString("0.0") ?? "—")</MudTd>
-            <MudTd>
-                <MudStack Row="true" Spacing="1">
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="() => OtworzZmianeStatusu(context)">Status</MudButton>
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
-                               Disabled="@(context.Status != "Zakończona")"
-                               OnClick="() => OtworzWystawienieOceny(context)">Ocena</MudButton>
-                </MudStack>
-            </MudTd>
-        </RowTemplate>
-    </MudTable>
+    <div class="stats">
+        <div class="stat">
+            <div class="label"><span class="dot" style="background:var(--info)"></span>W trakcie</div>
+            <div class="value">@_kpiWTrakcie</div>
+            <div class="trend">aktualnie realizowane</div>
+        </div>
+        <div class="stat">
+            <div class="label">
+                <span class="dot" style="background:var(--warning);box-shadow:0 0 0 3px rgba(240,196,25,0.22)"></span>
+                Do akceptacji
+            </div>
+            <div class="value">@_kpiOczekuje</div>
+            <div class="trend">srednio 3 dni rob.</div>
+        </div>
+        <div class="stat">
+            <div class="label"><span class="dot" style="background:var(--success)"></span>Zaliczone</div>
+            <div class="value">@_kpiZaliczone</div>
+            <div class="trend">biezacy rok akadem.</div>
+        </div>
+        <div class="stat">
+            <div class="label"><span class="dot" style="background:var(--error)"></span>Niezaliczone</div>
+            <div class="value">@_kpiNiezaliczone</div>
+            <div class="trend">wymagaja interwencji</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="filters">
+            <div class="filter">
+                <span class="filter-label">Status</span>
+                <select class="field" @bind="_filterStatus">
+                    <option value="">Wszystkie statusy</option>
+                    @foreach (var s in _wszystkieStatusy)
+                    {
+                        <option value="@s">@s</option>
+                    }
+                </select>
+            </div>
+            <div class="filter">
+                <span class="filter-label">Student</span>
+                <div class="search-field" style="min-width:220px">
+                    <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Small" />
+                    <input placeholder="Imie, nazwisko lub nr albumu" @bind="_szukajStudent" @bind:event="oninput" />
+                </div>
+            </div>
+            <div class="filter">
+                <span class="filter-label">Firma</span>
+                <input class="field" placeholder="Nazwa firmy" @bind="_filterFirma" @bind:event="oninput" />
+            </div>
+            <div class="filter">
+                <span class="filter-label">Semestr</span>
+                <select class="field" @bind="_filterSemestr">
+                    <option value="">Wszystkie</option>
+                    @for (int i = 1; i <= 8; i++)
+                    {
+                        <option value="@i">@i</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-spacer"></div>
+            @if (AnyFilter)
+            {
+                <button class="btn btn-text btn-sm" @onclick="ResetFilters">
+                    <MudIcon Icon="@Icons.Material.Filled.Close" Size="Size.Small" /> Wyczysc filtry
+                </button>
+            }
+        </div>
+
+        <div class="table-wrap">
+            <table class="t">
+                <thead>
+                    <tr>
+                        <th>ID / Student</th>
+                        <th>Firma</th>
+                        <th>Rodzaj</th>
+                        <th>Daty</th>
+                        <th>Semestr</th>
+                        <th>Status</th>
+                        <th style="text-align:center">Ocena</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var filtered = Filtrowane().ToList();
+                    }
+                    @if (filtered.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="8">
+                                <div class="empty">
+                                    <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Large" />
+                                    <div class="em-title">Brak wynikow</div>
+                                    <div class="em-sub">Sprobuj wyczyscic filtry lub zmienic zapytanie.</div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var p in filtered)
+                        {
+                            <tr>
+                                <td>
+                                    <div style="display:flex;align-items:center;gap:10px">
+                                        <div class="avatar" style="width:30px;height:30px;font-size:11px">@InitialsOf(p.ImieStudenta, p.NazwiskoStudenta)</div>
+                                        <div>
+                                            <div style="font-weight:600;font-size:13px">@p.ImieStudenta @p.NazwiskoStudenta</div>
+                                            <div class="t-meta">PR-@p.Idpraktyki.ToString("D5") - nr @p.NrAlbumu</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="t-company">
+                                        <div class="t-logo" style="@($"background:{StatusInfo.GradientFor(p.NazwaFirmy)}")">
+                                            @StatusInfo.Initials(p.NazwaFirmy)
+                                        </div>
+                                        <div>
+                                            <div>@p.NazwaFirmy</div>
+                                            <div class="t-meta">@p.MiastoFirmy</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="t-type">@p.RodzajPraktyki</span></td>
+                                <td class="t-dates">
+                                    @(p.DataRozpoczecia?.ToString("dd.MM.yy") ?? "—")
+                                    <span style="opacity:.5">→</span>
+                                    @(p.DataZakonczenia?.ToString("dd.MM.yy") ?? "—")
+                                </td>
+                                <td><span class="t-meta">sem. @p.Semestr</span></td>
+                                <td>
+                                    <button class="btn btn-text btn-sm @StatusInfo.ChipClass(p.Status)"
+                                            style="padding:3px 9px"
+                                            @onclick="() => OtworzZmianeStatusu(p)" title="Zmien status">
+                                        <span class="dot"></span>@p.Status
+                                    </button>
+                                </td>
+                                <td style="text-align:center">
+                                    @if (p.Ocena.HasValue)
+                                    {
+                                        <button class="btn btn-text btn-sm"
+                                                style="@($"padding:4px 10px;color:{(p.Ocena.Value >= 3 ? "var(--success)" : "var(--error)")};font-weight:700;font-variant-numeric:tabular-nums")"
+                                                @onclick="() => OtworzWystawienieOceny(p)" title="Zmien ocene">
+                                            @p.Ocena.Value.ToString("0.0")
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-text btn-sm"
+                                                style="padding:4px 10px;color:var(--text-disabled)"
+                                                @onclick="() => OtworzWystawienieOceny(p)"
+                                                disabled="@(p.Status != "Zakończona" && p.Status != "Zaliczona" && p.Status != "Niezaliczona")"
+                                                title="Wystaw ocene">
+                                            —
+                                        </button>
+                                    }
+                                </td>
+                                <td style="text-align:right">
+                                    <button class="icon-btn" @onclick="() => OtworzZmianeStatusu(p)" title="Akcje">
+                                        <MudIcon Icon="@Icons.Material.Filled.MoreHoriz" Size="Size.Small" />
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--text-secondary)">
+            <span>
+                Wyswietlono <strong style="color:var(--text-primary)">@filtered.Count</strong>
+                z <strong style="color:var(--text-primary)">@_praktyki.Count</strong> praktyk
+            </span>
+            <button class="btn btn-text btn-sm" @onclick="Reload">
+                <MudIcon Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" /> Odswiez
+            </button>
+        </div>
+    </div>
 }
 
 @code {
@@ -90,13 +213,22 @@ else
     private bool _loading = true;
 
     private string? _filterStatus;
-    private string? _filterNrAlbumu;
     private string? _filterFirma;
-    private int? _filterSemestr;
-    private string? _szukaj;
+    private string? _filterSemestr;
+    private string? _szukajStudent;
 
     private static readonly string[] _wszystkieStatusy =
         new[] { "Zgłoszona", "Zatwierdzona", "Odrzucona", "Zakończona", "Zaliczona", "Niezaliczona" };
+
+    private int _kpiWTrakcie => _praktyki.Count(p => p.Status == "Zatwierdzona");
+    private int _kpiOczekuje => _praktyki.Count(p => p.Status == "Zgłoszona");
+    private int _kpiZaliczone => _praktyki.Count(p => p.Status == "Zaliczona");
+    private int _kpiNiezaliczone => _praktyki.Count(p => p.Status == "Niezaliczona");
+
+    private bool AnyFilter => !string.IsNullOrWhiteSpace(_filterStatus)
+        || !string.IsNullOrWhiteSpace(_filterFirma)
+        || !string.IsNullOrWhiteSpace(_filterSemestr)
+        || !string.IsNullOrWhiteSpace(_szukajStudent);
 
     protected override async Task OnInitializedAsync()
     {
@@ -116,20 +248,27 @@ else
         _loading = false;
     }
 
+    private void ResetFilters()
+    {
+        _filterStatus = null;
+        _filterFirma = null;
+        _filterSemestr = null;
+        _szukajStudent = null;
+    }
+
     private IEnumerable<VPraktykiPelne> Filtrowane()
     {
         IEnumerable<VPraktykiPelne> q = _praktyki;
         if (!string.IsNullOrWhiteSpace(_filterStatus)) q = q.Where(p => p.Status == _filterStatus);
-        if (!string.IsNullOrWhiteSpace(_filterNrAlbumu)) q = q.Where(p => p.NrAlbumu.Contains(_filterNrAlbumu, StringComparison.OrdinalIgnoreCase));
         if (!string.IsNullOrWhiteSpace(_filterFirma)) q = q.Where(p => p.NazwaFirmy.Contains(_filterFirma, StringComparison.OrdinalIgnoreCase));
-        if (_filterSemestr is not null) q = q.Where(p => p.Semestr == _filterSemestr);
-        if (!string.IsNullOrWhiteSpace(_szukaj))
+        if (int.TryParse(_filterSemestr, out var sem)) q = q.Where(p => p.Semestr == sem);
+        if (!string.IsNullOrWhiteSpace(_szukajStudent))
         {
-            var s = _szukaj;
+            var s = _szukajStudent.Trim();
             q = q.Where(p =>
                 p.ImieStudenta.Contains(s, StringComparison.OrdinalIgnoreCase) ||
                 p.NazwiskoStudenta.Contains(s, StringComparison.OrdinalIgnoreCase) ||
-                p.NazwaFirmy.Contains(s, StringComparison.OrdinalIgnoreCase));
+                p.NrAlbumu.Contains(s, StringComparison.OrdinalIgnoreCase));
         }
         return q;
     }
@@ -157,14 +296,10 @@ else
             await Reload();
     }
 
-    private static Color StatusColor(string status) => status switch
+    private static string InitialsOf(string imie, string nazw)
     {
-        "Zgłoszona" => Color.Info,
-        "Zatwierdzona" => Color.Primary,
-        "Zakończona" => Color.Warning,
-        "Zaliczona" => Color.Success,
-        "Niezaliczona" => Color.Error,
-        "Odrzucona" => Color.Error,
-        _ => Color.Default
-    };
+        var i = string.IsNullOrEmpty(imie) ? '?' : imie[0];
+        var n = string.IsNullOrEmpty(nazw) ? '?' : nazw[0];
+        return $"{char.ToUpper(i)}{char.ToUpper(n)}";
+    }
 }

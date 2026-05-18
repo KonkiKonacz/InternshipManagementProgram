@@ -1,9 +1,15 @@
 @page "/"
+@rendermode InteractiveServer
+@inject AppState AppState
+@inject NavigationManager Nav
 
-<PageTitle>PraktykiApp</PageTitle>
+<PageTitle>PraktykiStud</PageTitle>
 
-<MudPaper Class="pa-8" Elevation="0">
-    <MudText Typo="Typo.h4" GutterBottom="true">PraktykiApp</MudText>
-    <MudText Typo="Typo.body1">System obsługi praktyk studenckich. Zaloguj się, aby kontynuować.</MudText>
-    <MudButton Class="mt-4" Variant="Variant.Filled" Color="Color.Primary" Href="/login">Zaloguj się</MudButton>
-</MudPaper>
+@code {
+    protected override void OnInitialized()
+    {
+        if (AppState.IsAdmin) Nav.NavigateTo("/admin");
+        else if (AppState.IsStudent) Nav.NavigateTo("/student");
+        else Nav.NavigateTo("/login");
+    }
+}

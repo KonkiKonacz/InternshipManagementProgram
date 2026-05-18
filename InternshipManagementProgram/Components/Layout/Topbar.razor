@@ -1,0 +1,97 @@
+@implements IDisposable
+@inject AppState AppState
+@inject NavigationManager Nav
+
+<div class="topbar">
+    <div class="crumbs">
+        @for (int i = 0; i < _crumbs.Count; i++)
+        {
+            if (i > 0)
+            {
+                <span class="crumb-sep"><MudIcon Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small" /></span>
+            }
+            if (i == _crumbs.Count - 1)
+            {
+                <strong>@_crumbs[i]</strong>
+            }
+            else
+            {
+                <span>@_crumbs[i]</span>
+            }
+        }
+    </div>
+    <div class="topbar-spacer"></div>
+
+    <div class="panel-switch" title="Demo: przelacznik widokow paneli">
+        <button class="@(AppState.IsStudent ? "active" : "")" @onclick="SwitchStudent">
+            <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" /> Student
+        </button>
+        <button class="@(AppState.IsAdmin ? "active" : "")" @onclick="SwitchAdmin">
+            <MudIcon Icon="@Icons.Material.Filled.AdminPanelSettings" Size="Size.Small" /> Administrator
+        </button>
+    </div>
+
+    <div class="divider-v"></div>
+
+    <div class="topbar-search">
+        <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Small" />
+        <input placeholder="Szukaj praktyk, firm, studentow..." />
+        <span class="kbd">Ctrl K</span>
+    </div>
+
+    <button class="icon-btn has-dot" title="Powiadomienia">
+        <MudIcon Icon="@Icons.Material.Filled.Notifications" Size="Size.Small" />
+    </button>
+</div>
+
+@code {
+    private List<string> _crumbs = new();
+
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += OnLoc;
+        AppState.Changed += OnChanged;
+        RecalcCrumbs();
+    }
+
+    private void OnLoc(object? s, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        RecalcCrumbs();
+        InvokeAsync(StateHasChanged);
+    }
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    private void RecalcCrumbs()
+    {
+        var path = Nav.ToBaseRelativePath(Nav.Uri).TrimEnd('/');
+        _crumbs = path switch
+        {
+            "" => new() { "Pulpit" },
+            "student" => new() { "Panel studenta", "Moje praktyki" },
+            "student/zglos" => new() { "Panel studenta", "Nowe zgloszenie" },
+            var p when p.StartsWith("student/praktyka/") => new() { "Panel studenta", "Szczegoly praktyki" },
+            "admin" => new() { "Panel administratora", "Praktyki" },
+            "admin/studenci" => new() { "Panel administratora", "Studenci" },
+            "login" => new() { "Logowanie" },
+            _ => new() { path }
+        };
+    }
+
+    private void SwitchStudent()
+    {
+        AppState.LoginAsStudent();
+        Nav.NavigateTo("/student");
+    }
+
+    private void SwitchAdmin()
+    {
+        AppState.LoginAsAdmin();
+        Nav.NavigateTo("/admin");
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLoc;
+        AppState.Changed -= OnChanged;
+    }
+}

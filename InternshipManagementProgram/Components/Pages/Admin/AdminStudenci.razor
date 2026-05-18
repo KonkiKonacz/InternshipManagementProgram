@@ -4,90 +4,166 @@
 @inject AppState AppState
 @inject NavigationManager Nav
 
-<PageTitle>Studenci</PageTitle>
+<PageTitle>Studenci - PraktykiStud</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">Studenci</MudText>
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Studenci</h1>
+        <p class="page-sub">Lista studentow wymagajacych uwagi pelnomocnika ds. praktyk.</p>
+    </div>
+</div>
 
 @if (_loading)
 {
-    <MudProgressLinear Indeterminate="true"/>
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
 }
 else
 {
-    <MudGrid>
-        <MudItem xs="12" md="6">
-            <MudPaper Class="pa-4" Elevation="1">
-                <MudText Typo="Typo.h6" GutterBottom="true">Bez praktyk (V_StudenciBezPraktyk)</MudText>
+    <div class="tabs">
+        <button class="tab @(_tab == "bez" ? "active" : "")" @onclick='() => _tab = "bez"'>
+            <MudIcon Icon="@Icons.Material.Filled.PeopleAlt" Size="Size.Small" />
+            Studenci bez praktyk
+            <span class="badge-count">@_bez.Count</span>
+        </button>
+        <button class="tab @(_tab == "fail" ? "active" : "")" @onclick='() => _tab = "fail"'>
+            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" />
+            Z niezaliczonymi praktykami
+            <span class="badge-count">@_niezaliczeni.Count</span>
+        </button>
+    </div>
+
+    @if (_tab == "bez")
+    {
+        <div class="card">
+            <div class="card-head">
+                <div>
+                    <h3 class="card-title">Studenci bez zarejestrowanej praktyki</h3>
+                    <div class="muted" style="font-size:12px;margin-top:2px">Wg widoku V_StudenciBezPraktyk</div>
+                </div>
+            </div>
+            <div class="table-wrap">
                 @if (_bez.Count == 0)
                 {
-                    <MudAlert Severity="Severity.Info" Dense="true">Brak rekordów.</MudAlert>
+                    <div class="empty">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" />
+                        <div class="em-title">Wszyscy studenci maja praktyke</div>
+                        <div class="em-sub">Brak rekordow w widoku.</div>
+                    </div>
                 }
                 else
                 {
-                    <MudTable Items="_bez" Hover="true" Dense="true" Striped="true">
-                        <HeaderContent>
-                            <MudTh>Nr albumu</MudTh>
-                            <MudTh>Imię</MudTh>
-                            <MudTh>Nazwisko</MudTh>
-                            <MudTh>Sem.</MudTh>
-                            <MudTh>Kierunek</MudTh>
-                            <MudTh>Wydział</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd>@context.NrAlbumu</MudTd>
-                            <MudTd>@context.Imie</MudTd>
-                            <MudTd>@context.Nazwisko</MudTd>
-                            <MudTd>@context.Semestr</MudTd>
-                            <MudTd>@context.NazwaKierunku</MudTd>
-                            <MudTd>@context.NazwaWydzialu</MudTd>
-                        </RowTemplate>
-                    </MudTable>
+                    <table class="t">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Semestr</th>
+                                <th>Kierunek</th>
+                                <th>Wydzial</th>
+                                <th>Stan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in _bez)
+                            {
+                                <tr>
+                                    <td>
+                                        <div style="display:flex;align-items:center;gap:10px">
+                                            <div class="avatar avatar-warning" style="width:32px;height:32px;font-size:12px">@InitialsOf(s.Imie, s.Nazwisko)</div>
+                                            <div>
+                                                <div style="font-weight:600;font-size:13px">@s.Imie @s.Nazwisko</div>
+                                                <div class="t-meta">nr albumu @s.NrAlbumu</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="t-meta">sem. @s.Semestr</span></td>
+                                    <td><span class="t-type">@s.NazwaKierunku</span></td>
+                                    <td><span class="t-meta">@s.NazwaWydzialu</span></td>
+                                    <td>
+                                        <span class="chip chip-warning"><span class="dot"></span>Brak praktyki</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 }
-            </MudPaper>
-        </MudItem>
-
-        <MudItem xs="12" md="6">
-            <MudPaper Class="pa-4" Elevation="1">
-                <MudText Typo="Typo.h6" GutterBottom="true">Niezaliczeni (V_StudenciNiezaliczeni)</MudText>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-head">
+                <div>
+                    <h3 class="card-title">Studenci z niezaliczonymi praktykami</h3>
+                    <div class="muted" style="font-size:12px;margin-top:2px">Wg widoku V_StudenciNiezaliczeni - wymagana decyzja: powtorzenie / przedluzenie</div>
+                </div>
+            </div>
+            <div class="table-wrap">
                 @if (_niezaliczeni.Count == 0)
                 {
-                    <MudAlert Severity="Severity.Info" Dense="true">Brak rekordów.</MudAlert>
+                    <div class="empty">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" />
+                        <div class="em-title">Brak niezaliczonych praktyk</div>
+                        <div class="em-sub">Wszyscy studenci zaliczyli praktyki.</div>
+                    </div>
                 }
                 else
                 {
-                    <MudTable Items="_niezaliczeni" Hover="true" Dense="true" Striped="true">
-                        <HeaderContent>
-                            <MudTh>Nr albumu</MudTh>
-                            <MudTh>Imię</MudTh>
-                            <MudTh>Nazwisko</MudTh>
-                            <MudTh>Sem.</MudTh>
-                            <MudTh>Kierunek</MudTh>
-                            <MudTh>Firma</MudTh>
-                            <MudTh>Ocena</MudTh>
-                            <MudTh>Daty</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd>@context.NrAlbumu</MudTd>
-                            <MudTd>@context.Imie</MudTd>
-                            <MudTd>@context.Nazwisko</MudTd>
-                            <MudTd>@context.Semestr</MudTd>
-                            <MudTd>@context.NazwaKierunku</MudTd>
-                            <MudTd>@context.NazwaFirmy</MudTd>
-                            <MudTd>@(context.Ocena?.ToString("0.0") ?? "—")</MudTd>
-                            <MudTd>
-                                @(context.DataRozpoczecia?.ToString("yyyy-MM-dd") ?? "—") /
-                                @(context.DataZakonczenia?.ToString("yyyy-MM-dd") ?? "—")
-                            </MudTd>
-                        </RowTemplate>
-                    </MudTable>
+                    <table class="t">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Semestr</th>
+                                <th>Kierunek</th>
+                                <th>Ostatnia firma</th>
+                                <th>Daty</th>
+                                <th>Ocena</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in _niezaliczeni)
+                            {
+                                <tr>
+                                    <td>
+                                        <div style="display:flex;align-items:center;gap:10px">
+                                            <div class="avatar avatar-error" style="width:32px;height:32px;font-size:12px">@InitialsOf(s.Imie, s.Nazwisko)</div>
+                                            <div>
+                                                <div style="font-weight:600;font-size:13px">@s.Imie @s.Nazwisko</div>
+                                                <div class="t-meta">nr albumu @s.NrAlbumu - PR-@s.Idpraktyki.ToString("D5")</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="t-meta">sem. @s.Semestr</span></td>
+                                    <td><span class="t-type">@s.NazwaKierunku</span></td>
+                                    <td>@s.NazwaFirmy</td>
+                                    <td class="t-dates">
+                                        @(s.DataRozpoczecia?.ToString("dd.MM.yy") ?? "—")
+                                        <span style="opacity:.5">→</span>
+                                        @(s.DataZakonczenia?.ToString("dd.MM.yy") ?? "—")
+                                    </td>
+                                    <td>
+                                        @if (s.Ocena.HasValue)
+                                        {
+                                            <span class="grade-display" style="color:var(--error)">@s.Ocena.Value.ToString("0.0")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="chip chip-neutral"><span class="dot"></span>Odrzucona</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 }
-            </MudPaper>
-        </MudItem>
-    </MudGrid>
+            </div>
+        </div>
+    }
 }
 
 @code {
     private bool _loading = true;
+    private string _tab = "bez";
     private List<VStudenciBezPraktyk> _bez = new();
     private List<VStudenciNiezaliczeni> _niezaliczeni = new();
 
@@ -102,5 +178,12 @@ else
         _bez = await db.VStudenciBezPraktyks.ToListAsync();
         _niezaliczeni = await db.VStudenciNiezaliczenis.ToListAsync();
         _loading = false;
+    }
+
+    private static string InitialsOf(string imie, string nazw)
+    {
+        var i = string.IsNullOrEmpty(imie) ? '?' : imie[0];
+        var n = string.IsNullOrEmpty(nazw) ? '?' : nazw[0];
+        return $"{char.ToUpper(i)}{char.ToUpper(n)}";
     }
 }

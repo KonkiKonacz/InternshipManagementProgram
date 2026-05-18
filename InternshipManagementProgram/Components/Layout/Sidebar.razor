@@ -1,0 +1,76 @@
+@implements IDisposable
+@inject AppState AppState
+@inject NavigationManager Nav
+
+<aside class="sidebar">
+    <a class="brand" href="@HomeHref">
+        <div class="brand-mark"><img src="img/logo.png" alt="PraktykiStud" /></div>
+        <div class="brand-text">
+            PraktykiStud
+            <small>v3.4 · Politechnika</small>
+        </div>
+    </a>
+
+    <nav class="nav">
+        @if (AppState.IsStudent)
+        {
+            <div class="nav-section-label">Praktyki</div>
+            <NavItem Href="/student" Icon="@Icons.Material.Filled.Dashboard" Label="Moje praktyki" Match="NavLinkMatch.All" />
+            <NavItem Href="/student/zglos" Icon="@Icons.Material.Filled.Add" Label="Nowe zgłoszenie" />
+
+            <div class="nav-section-label">Konto</div>
+            <NavItem Href="/logout" Icon="@Icons.Material.Filled.Logout" Label="Wyloguj" />
+        }
+        else if (AppState.IsAdmin)
+        {
+            <div class="nav-section-label">Zarządzanie</div>
+            <NavItem Href="/admin" Icon="@Icons.Material.Filled.Work" Label="Praktyki" Match="NavLinkMatch.All" />
+            <NavItem Href="/admin/studenci" Icon="@Icons.Material.Filled.PeopleAlt" Label="Studenci" />
+
+            <div class="nav-section-label">Konto</div>
+            <NavItem Href="/logout" Icon="@Icons.Material.Filled.Logout" Label="Wyloguj" />
+        }
+    </nav>
+
+    <div class="sidebar-foot">
+        <div class="avatar @(AppState.IsAdmin ? "avatar-gold" : "")">
+            @Initials()
+        </div>
+        <div class="user-info">
+            <div class="name">@FriendlyName()</div>
+            <div class="meta">@RoleLabel()</div>
+        </div>
+        <a class="icon-btn" href="/logout" title="Wyloguj">
+            <MudIcon Icon="@Icons.Material.Filled.Logout" Size="Size.Small" />
+        </a>
+    </div>
+</aside>
+
+@code {
+    private string HomeHref => AppState.IsAdmin ? "/admin" : AppState.IsStudent ? "/student" : "/";
+
+    private string Initials()
+    {
+        if (AppState.IsAdmin) return "AD";
+        if (AppState.IsStudent) return "ST";
+        return "?";
+    }
+
+    private string FriendlyName()
+    {
+        if (AppState.IsAdmin) return "Administrator";
+        if (AppState.IsStudent) return "Student";
+        return "Gość";
+    }
+
+    private string RoleLabel()
+    {
+        if (AppState.IsAdmin) return "Pelnomocnik ds. praktyk";
+        if (AppState.IsStudent) return $"nr albumu {AppState.NrAlbumu}";
+        return "";
+    }
+
+    protected override void OnInitialized() => AppState.Changed += OnChanged;
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => AppState.Changed -= OnChanged;
+}

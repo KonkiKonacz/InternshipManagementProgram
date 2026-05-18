@@ -4,54 +4,238 @@
 @inject AppState AppState
 @inject NavigationManager Nav
 @inject ISnackbar Snackbar
+@inject CertificateService Certificates
+@inject IJSRuntime JS
 
-<PageTitle>Moje praktyki</PageTitle>
+<PageTitle>Moje praktyki - PraktykiStud</PageTitle>
 
-<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
-    <MudText Typo="Typo.h4">Moje praktyki</MudText>
-    <MudSpacer/>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Href="/student/zglos">Zgłoś praktykę</MudButton>
-</MudStack>
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Moje praktyki</h1>
+        <p class="page-sub">
+            Zgloszenia, status realizacji i zaswiadczenia.
+            @if (!_loading) { <text>Lacznie: <strong style="color:var(--text-primary)">@_praktyki.Count</strong>.</text> }
+        </p>
+    </div>
+    <div class="row">
+        <a class="btn btn-primary" href="/student/zglos">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Size="Size.Small" />
+            Nowe zgloszenie
+        </a>
+    </div>
+</div>
 
 @if (_loading)
 {
-    <MudProgressLinear Indeterminate="true"/>
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
 }
 else if (_praktyki.Count == 0)
 {
-    <MudAlert Severity="Severity.Info">Nie zgłosiłeś jeszcze żadnej praktyki.</MudAlert>
+    <div class="card">
+        <div class="empty">
+            <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" />
+            <div class="em-title">Brak praktyk</div>
+            <div class="em-sub">Nie zglosiles jeszcze zadnej praktyki. Kliknij "Nowe zgloszenie", aby dodac pierwsza.</div>
+        </div>
+    </div>
 }
 else
 {
-    <MudTable Items="_praktyki" Hover="true" Dense="true" Striped="true">
-        <HeaderContent>
-            <MudTh>ID</MudTh>
-            <MudTh>Data zgłoszenia</MudTh>
-            <MudTh>Firma</MudTh>
-            <MudTh>Rodzaj</MudTh>
-            <MudTh>Status</MudTh>
-            <MudTh>Ocena</MudTh>
-            <MudTh></MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd>@context.Idpraktyki</MudTd>
-            <MudTd>@context.DataZgloszenia.ToString("yyyy-MM-dd")</MudTd>
-            <MudTd>@context.NazwaFirmy</MudTd>
-            <MudTd>@context.RodzajPraktyki</MudTd>
-            <MudTd>
-                <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@context.Status</MudChip>
-            </MudTd>
-            <MudTd>@(context.Ocena?.ToString("0.0") ?? "—")</MudTd>
-            <MudTd>
-                <MudButton Variant="Variant.Outlined" Size="Size.Small" Href="@($"/student/praktyka/{context.Idpraktyki}")">Szczegóły</MudButton>
-            </MudTd>
-        </RowTemplate>
-    </MudTable>
+    <div class="stats">
+        <div class="stat">
+            <div class="label"><span class="dot" style="background:var(--success)"></span>Zaliczone</div>
+            <div class="value">@_kpiZaliczone</div>
+            <div class="trend">Wymog programu: <strong style="color:var(--text-primary);margin-left:4px">1 obowiazkowa</strong></div>
+        </div>
+        <div class="stat">
+            <div class="label"><span class="dot" style="background:var(--info)"></span>W trakcie</div>
+            <div class="value">@_kpiWTrakcie</div>
+            <div class="trend">Status: Zatwierdzona</div>
+        </div>
+        <div class="stat">
+            <div class="label"><span class="dot" style="background:var(--warning)"></span>Oczekuje na akceptacje</div>
+            <div class="value">@_kpiOczekuje</div>
+            <div class="trend">Sredni czas odpowiedzi: 3 dni rob.</div>
+        </div>
+        <div class="stat">
+            <div class="label"><span class="dot" style="background:var(--primary)"></span>Wszystkie zgloszenia</div>
+            <div class="value">@_praktyki.Count</div>
+            <div class="trend">w bazie</div>
+        </div>
+    </div>
+
+    <div class="split">
+        <div class="card">
+            <div class="card-head">
+                <div>
+                    <h3 class="card-title">Lista praktyk</h3>
+                    <div class="muted" style="font-size:12px;margin-top:2px">@_praktyki.Count wpisow - sortowane wg daty zgloszenia</div>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table class="t">
+                    <thead>
+                        <tr>
+                            <th>Firma</th>
+                            <th>Rodzaj praktyki</th>
+                            <th>Status</th>
+                            <th>Daty</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in _praktyki)
+                        {
+                            <tr class="clickable @(p.Idpraktyki == _selectedId ? "selected" : "")" @onclick="() => Select(p.Idpraktyki)">
+                                <td>
+                                    <div class="t-company">
+                                        <div class="t-logo" style="@($"background:{StatusInfo.GradientFor(p.NazwaFirmy)}")">
+                                            @StatusInfo.Initials(p.NazwaFirmy)
+                                        </div>
+                                        <div>
+                                            <div>@p.NazwaFirmy</div>
+                                            <div class="t-meta">PR-@p.Idpraktyki.ToString("D5")</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="t-type">@p.RodzajPraktyki</span>
+                                    <div class="t-meta">sem. @p.Semestr</div>
+                                </td>
+                                <td>
+                                    <span class="@StatusInfo.ChipClass(p.Status)">
+                                        <span class="dot"></span>@p.Status
+                                    </span>
+                                </td>
+                                <td class="t-dates">
+                                    @(p.DataRozpoczecia?.ToString("dd.MM.yy") ?? "—")
+                                    <span style="opacity:.5">→</span>
+                                    @(p.DataZakonczenia?.ToString("dd.MM.yy") ?? "—")
+                                </td>
+                                <td style="text-align:right">
+                                    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @{
+            var sel = _selected;
+        }
+        @if (sel != null)
+        {
+            var isPassed = sel.Status == "Zaliczona";
+            <div class="drawer">
+                <div class="drawer-head">
+                    <div class="row" style="gap:12px;min-width:0">
+                        <div class="t-logo" style="@($"background:{StatusInfo.GradientFor(sel.NazwaFirmy)};width:38px;height:38px;border-radius:10px;font-size:13px")">
+                            @StatusInfo.Initials(sel.NazwaFirmy)
+                        </div>
+                        <div style="min-width:0">
+                            <div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">@sel.NazwaFirmy</div>
+                            <div class="t-meta" style="margin-top:2px">PR-@sel.Idpraktyki.ToString("D5") - @sel.MiastoFirmy</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="drawer-body">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+                        <span class="@StatusInfo.ChipClass(sel.Status)"><span class="dot"></span>@sel.Status</span>
+                        <span class="t-meta">- @sel.RodzajPraktyki</span>
+                        @if (sel.Ocena.HasValue)
+                        {
+                            <span style="margin-left:auto">
+                                <span class="t-meta" style="margin-right:6px">Ocena:</span>
+                                <span class="grade-display" style="@($"color:{(sel.Ocena.Value >= 3 ? "var(--success)" : "var(--error)")}")">
+                                    @sel.Ocena.Value.ToString("0.0")
+                                </span>
+                            </span>
+                        }
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="detail-title">Informacje</div>
+                        <dl class="kv">
+                            <dt>Opiekun</dt>
+                            <dd>@(sel.TytulOpiekuna ?? "") @sel.ImieOpiekuna @sel.NazwiskoOpiekuna</dd>
+                            <dt>Rodzaj</dt>
+                            <dd>@sel.RodzajPraktyki</dd>
+                            <dt>Okres</dt>
+                            <dd>
+                                @(sel.DataRozpoczecia?.ToString("dd.MM.yyyy") ?? "—")
+                                -
+                                @(sel.DataZakonczenia?.ToString("dd.MM.yyyy") ?? "—")
+                            </dd>
+                            <dt>Semestr</dt>
+                            <dd>@sel.Semestr</dd>
+                            <dt>Kierunek</dt>
+                            <dd>@sel.NazwaKierunku</dd>
+                            <dt>Wydzial</dt>
+                            <dd>@sel.NazwaWydzialu</dd>
+                            @if (!string.IsNullOrEmpty(sel.ImieOsobyKontaktowej))
+                            {
+                                <dt>Kontakt firmy</dt>
+                                <dd>@sel.ImieOsobyKontaktowej @sel.NazwiskoOsobyKontaktowej (@(sel.StanowiskoOsobyKontaktowej ?? "—"))</dd>
+                            }
+                        </dl>
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="detail-title">Etapy realizacji</div>
+                        <div class="timeline">
+                            @foreach (var step in BuildTimeline(sel))
+                            {
+                                <div class="tl-item @step.State">
+                                    <div class="tl-label">@step.Label</div>
+                                    <div class="tl-meta">@step.Meta</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+                        @if (isPassed)
+                        {
+                            <button class="btn btn-success" style="flex:1" @onclick="PobierzZaswiadczenie" disabled="@_pdfBusy">
+                                <MudIcon Icon="@Icons.Material.Filled.Download" Size="Size.Small" />
+                                @(_pdfBusy ? "Generowanie..." : "Pobierz zaswiadczenie")
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outlined" style="flex:1" disabled title="Dostepne po statusie Zaliczona">
+                                <MudIcon Icon="@Icons.Material.Filled.Download" Size="Size.Small" />
+                                Pobierz zaswiadczenie
+                            </button>
+                        }
+                    </div>
+
+                    @if (!isPassed)
+                    {
+                        <div class="info-banner">
+                            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" />
+                            <span>Przycisk "Pobierz zaswiadczenie" jest aktywny dopiero gdy status praktyki to <strong>Zaliczona</strong>.</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
 }
 
 @code {
     private List<VPraktykiPelne> _praktyki = new();
     private bool _loading = true;
+    private int? _selectedId;
+    private bool _pdfBusy;
+
+    private VPraktykiPelne? _selected => _selectedId is null ? null : _praktyki.FirstOrDefault(p => p.Idpraktyki == _selectedId);
+
+    private int _kpiZaliczone => _praktyki.Count(p => p.Status == "Zaliczona");
+    private int _kpiWTrakcie => _praktyki.Count(p => p.Status == "Zatwierdzona");
+    private int _kpiOczekuje => _praktyki.Count(p => p.Status == "Zgłoszona");
 
     protected override async Task OnInitializedAsync()
     {
@@ -63,7 +247,7 @@ else
         var nrAlbumu = AppState.NrAlbumu;
         if (string.IsNullOrEmpty(nrAlbumu))
         {
-            Snackbar.Add("Brak numeru albumu w kontekście użytkownika.", Severity.Error);
+            Snackbar.Add("Brak numeru albumu w kontekscie uzytkownika.", Severity.Error);
             _loading = false;
             return;
         }
@@ -73,17 +257,64 @@ else
             .Where(p => p.NrAlbumu == nrAlbumu)
             .OrderByDescending(p => p.DataZgloszenia)
             .ToListAsync();
+        _selectedId = _praktyki.FirstOrDefault()?.Idpraktyki;
         _loading = false;
     }
 
-    private static Color StatusColor(string status) => status switch
+    private void Select(int id) => _selectedId = id;
+
+    private async Task PobierzZaswiadczenie()
     {
-        "Zgłoszona" => Color.Info,
-        "Zatwierdzona" => Color.Primary,
-        "Zakończona" => Color.Warning,
-        "Zaliczona" => Color.Success,
-        "Niezaliczona" => Color.Error,
-        "Odrzucona" => Color.Error,
-        _ => Color.Default
-    };
+        if (_selected is null) return;
+        _pdfBusy = true;
+        try
+        {
+            var bytes = Certificates.GenerujZaswiadczenie(_selected);
+            var fileName = $"Zaswiadczenie_praktyka_{_selected.Idpraktyki}.pdf";
+            await JS.InvokeVoidAsync("downloadFileFromBase64", fileName, Convert.ToBase64String(bytes), "application/pdf");
+            Snackbar.Add($"Zaswiadczenie PR-{_selected.Idpraktyki:D5} wygenerowane.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Blad generowania PDF: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _pdfBusy = false;
+        }
+    }
+
+    // Etapy budowane na podstawie statusu - prosta heurystyka, bez dodatkowych kolumn w bazie.
+    private record TlStep(string Label, string Meta, string State);
+
+    private static IEnumerable<TlStep> BuildTimeline(VPraktykiPelne p)
+    {
+        var status = p.Status;
+
+        string s1 = "done";
+        string s2 = status switch { "Zgłoszona" => "active", "Odrzucona" => "active", _ => "done" };
+        string s3 = status switch
+        {
+            "Zgłoszona" or "Odrzucona" => "pending",
+            "Zatwierdzona" => "active",
+            _ => "done"
+        };
+        string s4 = status switch
+        {
+            "Zgłoszona" or "Odrzucona" or "Zatwierdzona" => "pending",
+            "Zakończona" => "active",
+            _ => "done"
+        };
+        string s5 = status switch
+        {
+            "Zaliczona" or "Niezaliczona" => "done",
+            _ => "pending"
+        };
+
+        yield return new("Zgloszenie", p.DataZgloszenia.ToString("dd.MM.yyyy"), s1);
+        yield return new("Akceptacja przez pelnomocnika", status == "Odrzucona" ? "Odrzucona" : (status == "Zgłoszona" ? "Oczekuje" : "Zatwierdzona"), s2);
+        yield return new("Realizacja", p.DataRozpoczecia.HasValue ? $"od {p.DataRozpoczecia.Value:dd.MM.yyyy}" : "—", s3);
+        yield return new("Zakonczenie", p.DataZakonczenia.HasValue ? p.DataZakonczenia.Value.ToString("dd.MM.yyyy") : "—", s4);
+        yield return new("Ocena koncowa", p.Ocena.HasValue ? p.Ocena.Value.ToString("0.0") : "—", s5);
+    }
 }

@@ -1,27 +1,35 @@
 @page "/login"
+@layout MainLayout
 @rendermode InteractiveServer
 @inject AppState AppState
 @inject NavigationManager Nav
 
-<PageTitle>Logowanie</PageTitle>
+<PageTitle>Logowanie - PraktykiStud</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="mt-10">
-    <MudPaper Class="pa-8" Elevation="2">
-        <MudText Typo="Typo.h5" GutterBottom="true">Logowanie (tryb demo)</MudText>
-        <MudText Typo="Typo.body2" Class="mb-6">Wybierz konto, którym chcesz się zalogować.</MudText>
+<div class="login-wrap">
+    <div class="login-card">
+        <div class="brand-row">
+            <img src="img/logo.png" alt="PraktykiStud" />
+            <div>
+                <h1>PraktykiStud</h1>
+                <p class="subtitle">v3.4 - Politechnika</p>
+            </div>
+        </div>
 
-        <MudStack Spacing="3">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                       StartIcon="@Icons.Material.Filled.School" OnClick="ZalogujStudenta">
-                Zaloguj jako student (nr albumu 62753)
-            </MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Secondary" FullWidth="true"
-                       StartIcon="@Icons.Material.Filled.AdminPanelSettings" OnClick="ZalogujAdmina">
+        <p class="page-sub" style="margin-bottom:4px">Wybierz konto demo, ktorym chcesz sie zalogowac.</p>
+
+        <div class="actions">
+            <button class="btn btn-primary" @onclick="ZalogujStudenta">
+                <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" />
+                Zaloguj jako student (nr 62753)
+            </button>
+            <button class="btn btn-outlined" @onclick="ZalogujAdmina">
+                <MudIcon Icon="@Icons.Material.Filled.AdminPanelSettings" Size="Size.Small" />
                 Zaloguj jako administrator
-            </MudButton>
-        </MudStack>
-    </MudPaper>
-</MudContainer>
+            </button>
+        </div>
+    </div>
+</div>
 
 @code {
     private void ZalogujStudenta()
