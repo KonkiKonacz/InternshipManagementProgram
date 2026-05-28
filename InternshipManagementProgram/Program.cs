@@ -25,6 +25,19 @@ builder.Services.AddScoped<CertificateService>();
 
 var app = builder.Build();
 
+// Rozgrzewka EF Core w tle: pierwsze utworzenie kontekstu buduje model i otwiera
+// polaczenie (2-3s) - robimy to przy starcie, by panel po zalogowaniu wczytywal sie od razu.
+_ = Task.Run(async () =>
+{
+    try
+    {
+        var factory = app.Services.GetRequiredService<IDbContextFactory<PraktykiStudenckieContext>>();
+        await using var db = await factory.CreateDbContextAsync();
+        await db.VPraktykiPelnes.AsNoTracking().Take(1).ToListAsync();
+    }
+    catch { /* rozgrzewka best-effort - nie blokuje startu aplikacji */ }
+});
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);

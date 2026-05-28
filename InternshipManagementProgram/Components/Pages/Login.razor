@@ -42,25 +42,20 @@
 @code {
     private bool _loggingIn;
 
-    private async Task ZalogujStudenta()
-    {
-        AppState.LoginAsStudent();
-        await PokazLadowanieIPrzejdz("/student");
-    }
+    private Task ZalogujStudenta() => ZalogujIPrzejdz(admin: false, url: "/student");
+    private Task ZalogujAdmina() => ZalogujIPrzejdz(admin: true, url: "/admin");
 
-    private async Task ZalogujAdmina()
-    {
-        AppState.LoginAsAdmin();
-        await PokazLadowanieIPrzejdz("/admin");
-    }
-
-    // Pokazujemy spinner zanim ruszymy do panelu - pierwsze wczytanie (polaczenie z baza,
-    // budowa modelu EF) potrafi zajac 2-3s, wiec okno wyboru nie powinno wisiec bez reakcji.
-    private async Task PokazLadowanieIPrzejdz(string url)
+    // Najpierw pokazujemy spinner na ekranie logowania, dopiero potem zmieniamy stan i
+    // nawigujemy - dzieki temu okno wyboru nie wisi bez reakcji podczas wczytywania panelu.
+    private async Task ZalogujIPrzejdz(bool admin, string url)
     {
         _loggingIn = true;
         StateHasChanged();
         await Task.Yield();
+
+        if (admin) AppState.LoginAsAdmin();
+        else AppState.LoginAsStudent();
+
         Nav.NavigateTo(url);
     }
 }
