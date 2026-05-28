@@ -4,19 +4,17 @@
 @inject AppState AppState
 @inject NavigationManager Nav
 
-<PageTitle>Logowanie - PraktykiStud</PageTitle>
+<PageTitle>Logowanie - System Rejestracji Praktyk Studenckich</PageTitle>
 
 <div class="login-wrap">
     <div class="login-card">
-        <div class="brand-row">
-            <img src="img/logo.png" alt="PraktykiStud" />
-            <div>
-                <h1>PraktykiStud</h1>
-                <p class="subtitle">v3.4 - Politechnika</p>
-            </div>
+        <div class="brand-col">
+            <img src="img/logo.png" alt="System Rejestracji Praktyk Studenckich" />
+            <h1>System Rejestracji Praktyk Studenckich</h1>
+            <p class="subtitle">V1.0 - UBB</p>
         </div>
 
-        <p class="page-sub" style="margin-bottom:4px">Wybierz konto demo, ktorym chcesz sie zalogowac.</p>
+        <p class="page-sub login-sub">Wybierz konto demo, którym chcesz się zalogować.</p>
 
         <div class="actions">
             <button class="btn btn-primary" @onclick="ZalogujStudenta">

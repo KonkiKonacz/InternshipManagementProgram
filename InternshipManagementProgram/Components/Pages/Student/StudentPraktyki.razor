@@ -13,14 +13,14 @@
     <div>
         <h1 class="page-title">Moje praktyki</h1>
         <p class="page-sub">
-            Zgloszenia, status realizacji i zaswiadczenia.
-            @if (!_loading) { <text>Lacznie: <strong style="color:var(--text-primary)">@_praktyki.Count</strong>.</text> }
+            Zgłoszenia, status realizacji i zaświadczenia.
+            @if (!_loading) { <text>Łącznie: <strong style="color:var(--text-primary)">@_praktyki.Count</strong>.</text> }
         </p>
     </div>
     <div class="row">
         <a class="btn btn-primary" href="/student/zglos">
             <MudIcon Icon="@Icons.Material.Filled.Add" Size="Size.Small" />
-            Nowe zgloszenie
+            Nowe zgłoszenie
         </a>
     </div>
 </div>
@@ -35,7 +35,7 @@ else if (_praktyki.Count == 0)
         <div class="empty">
             <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" />
             <div class="em-title">Brak praktyk</div>
-            <div class="em-sub">Nie zglosiles jeszcze zadnej praktyki. Kliknij "Nowe zgloszenie", aby dodac pierwsza.</div>
+            <div class="em-sub">Nie zgłosiłeś jeszcze żadnej praktyki. Kliknij „Nowe zgłoszenie", aby dodać pierwszą.</div>
         </div>
     </div>
 }
@@ -45,7 +45,7 @@ else
         <div class="stat">
             <div class="label"><span class="dot" style="background:var(--success)"></span>Zaliczone</div>
             <div class="value">@_kpiZaliczone</div>
-            <div class="trend">Wymog programu: <strong style="color:var(--text-primary);margin-left:4px">1 obowiazkowa</strong></div>
+            <div class="trend">Wymóg programu: <strong style="color:var(--text-primary);margin-left:4px">1 obowiązkowa</strong></div>
         </div>
         <div class="stat">
             <div class="label"><span class="dot" style="background:var(--info)"></span>W trakcie</div>
@@ -53,12 +53,12 @@ else
             <div class="trend">Status: Zatwierdzona</div>
         </div>
         <div class="stat">
-            <div class="label"><span class="dot" style="background:var(--warning)"></span>Oczekuje na akceptacje</div>
+            <div class="label"><span class="dot" style="background:var(--warning)"></span>Oczekuje na akceptację</div>
             <div class="value">@_kpiOczekuje</div>
-            <div class="trend">Sredni czas odpowiedzi: 3 dni rob.</div>
+            <div class="trend">Średni czas odpowiedzi: 3 dni rob.</div>
         </div>
         <div class="stat">
-            <div class="label"><span class="dot" style="background:var(--primary)"></span>Wszystkie zgloszenia</div>
+            <div class="label"><span class="dot" style="background:var(--primary)"></span>Wszystkie zgłoszenia</div>
             <div class="value">@_praktyki.Count</div>
             <div class="trend">w bazie</div>
         </div>
@@ -69,7 +69,7 @@ else
             <div class="card-head">
                 <div>
                     <h3 class="card-title">Lista praktyk</h3>
-                    <div class="muted" style="font-size:12px;margin-top:2px">@_praktyki.Count wpisow - sortowane wg daty zgloszenia</div>
+                    <div class="muted" style="font-size:12px;margin-top:2px">@_praktyki.Count wpisów - sortowane wg daty zgłoszenia</div>
                 </div>
             </div>
             <div class="table-wrap">
@@ -172,7 +172,7 @@ else
                             <dd>@sel.Semestr</dd>
                             <dt>Kierunek</dt>
                             <dd>@sel.NazwaKierunku</dd>
-                            <dt>Wydzial</dt>
+                            <dt>Wydział</dt>
                             <dd>@sel.NazwaWydzialu</dd>
                             @if (!string.IsNullOrEmpty(sel.ImieOsobyKontaktowej))
                             {
@@ -200,14 +200,14 @@ else
                         {
                             <button class="btn btn-success" style="flex:1" @onclick="PobierzZaswiadczenie" disabled="@_pdfBusy">
                                 <MudIcon Icon="@Icons.Material.Filled.Download" Size="Size.Small" />
-                                @(_pdfBusy ? "Generowanie..." : "Pobierz zaswiadczenie")
+                                @(_pdfBusy ? "Generowanie..." : "Pobierz zaświadczenie")
                             </button>
                         }
                         else
                         {
-                            <button class="btn btn-outlined" style="flex:1" disabled title="Dostepne po statusie Zaliczona">
+                            <button class="btn btn-outlined" style="flex:1" disabled title="Dostępne po statusie Zaliczona">
                                 <MudIcon Icon="@Icons.Material.Filled.Download" Size="Size.Small" />
-                                Pobierz zaswiadczenie
+                                Pobierz zaświadczenie
                             </button>
                         }
                     </div>
@@ -216,7 +216,7 @@ else
                     {
                         <div class="info-banner">
                             <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" />
-                            <span>Przycisk "Pobierz zaswiadczenie" jest aktywny dopiero gdy status praktyki to <strong>Zaliczona</strong>.</span>
+                            <span>Przycisk „Pobierz zaświadczenie" jest aktywny dopiero gdy status praktyki to <strong>Zaliczona</strong>.</span>
                         </div>
                     }
                 </div>
@@ -247,7 +247,7 @@ else
         var nrAlbumu = AppState.NrAlbumu;
         if (string.IsNullOrEmpty(nrAlbumu))
         {
-            Snackbar.Add("Brak numeru albumu w kontekscie uzytkownika.", Severity.Error);
+            Snackbar.Add("Brak numeru albumu w kontekście użytkownika.", Severity.Error);
             _loading = false;
             return;
         }
@@ -272,11 +272,11 @@ else
             var bytes = Certificates.GenerujZaswiadczenie(_selected);
             var fileName = $"Zaswiadczenie_praktyka_{_selected.Idpraktyki}.pdf";
             await JS.InvokeVoidAsync("downloadFileFromBase64", fileName, Convert.ToBase64String(bytes), "application/pdf");
-            Snackbar.Add($"Zaswiadczenie PR-{_selected.Idpraktyki:D5} wygenerowane.", Severity.Success);
+            Snackbar.Add($"Zaświadczenie PR-{_selected.Idpraktyki:D5} wygenerowane.", Severity.Success);
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Blad generowania PDF: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Błąd generowania PDF: {ex.Message}", Severity.Error);
         }
         finally
         {
@@ -311,10 +311,10 @@ else
             _ => "pending"
         };
 
-        yield return new("Zgloszenie", p.DataZgloszenia.ToString("dd.MM.yyyy"), s1);
-        yield return new("Akceptacja przez pelnomocnika", status == "Odrzucona" ? "Odrzucona" : (status == "Zgłoszona" ? "Oczekuje" : "Zatwierdzona"), s2);
+        yield return new("Zgłoszenie", p.DataZgloszenia.ToString("dd.MM.yyyy"), s1);
+        yield return new("Akceptacja przez pełnomocnika", status == "Odrzucona" ? "Odrzucona" : (status == "Zgłoszona" ? "Oczekuje" : "Zatwierdzona"), s2);
         yield return new("Realizacja", p.DataRozpoczecia.HasValue ? $"od {p.DataRozpoczecia.Value:dd.MM.yyyy}" : "—", s3);
-        yield return new("Zakonczenie", p.DataZakonczenia.HasValue ? p.DataZakonczenia.Value.ToString("dd.MM.yyyy") : "—", s4);
-        yield return new("Ocena koncowa", p.Ocena.HasValue ? p.Ocena.Value.ToString("0.0") : "—", s5);
+        yield return new("Zakończenie", p.DataZakonczenia.HasValue ? p.DataZakonczenia.Value.ToString("dd.MM.yyyy") : "—", s4);
+        yield return new("Ocena końcowa", p.Ocena.HasValue ? p.Ocena.Value.ToString("0.0") : "—", s5);
     }
 }

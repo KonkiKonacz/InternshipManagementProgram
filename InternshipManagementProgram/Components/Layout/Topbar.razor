@@ -22,7 +22,7 @@
     </div>
     <div class="topbar-spacer"></div>
 
-    <div class="panel-switch" title="Demo: przelacznik widokow paneli">
+    <div class="panel-switch" title="Demo: przełącznik widoków paneli">
         <button class="@(AppState.IsStudent ? "active" : "")" @onclick="SwitchStudent">
             <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" /> Student
         </button>
@@ -35,7 +35,7 @@
 
     <div class="topbar-search">
         <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Small" />
-        <input placeholder="Szukaj praktyk, firm, studentow..." />
+        <input placeholder="Szukaj praktyk, firm, studentów..." />
         <span class="kbd">Ctrl K</span>
     </div>
 
@@ -68,8 +68,8 @@
         {
             "" => new() { "Pulpit" },
             "student" => new() { "Panel studenta", "Moje praktyki" },
-            "student/zglos" => new() { "Panel studenta", "Nowe zgloszenie" },
-            var p when p.StartsWith("student/praktyka/") => new() { "Panel studenta", "Szczegoly praktyki" },
+            "student/zglos" => new() { "Panel studenta", "Nowe zgłoszenie" },
+            var p when p.StartsWith("student/praktyka/") => new() { "Panel studenta", "Szczegóły praktyki" },
             "admin" => new() { "Panel administratora", "Praktyki" },
             "admin/studenci" => new() { "Panel administratora", "Studenci" },
             "login" => new() { "Logowanie" },

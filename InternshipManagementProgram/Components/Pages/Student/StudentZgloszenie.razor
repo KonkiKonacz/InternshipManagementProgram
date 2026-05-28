@@ -5,16 +5,16 @@
 @inject NavigationManager Nav
 @inject ISnackbar Snackbar
 
-<PageTitle>Nowe zgloszenie - PraktykiStud</PageTitle>
+<PageTitle>Nowe zgłoszenie - PraktykiStud</PageTitle>
 
 <div class="page-head">
     <div>
-        <h1 class="page-title">Zgloszenie nowej praktyki</h1>
-        <p class="page-sub">Wypelnij dane praktyki - po wyslaniu zgloszenie trafia do pelnomocnika ds. praktyk.</p>
+        <h1 class="page-title">Zgłoszenie nowej praktyki</h1>
+        <p class="page-sub">Wypełnij dane praktyki - po wysłaniu zgłoszenie trafia do pełnomocnika ds. praktyk.</p>
     </div>
     <div class="row">
         <a class="btn btn-text" href="/student">
-            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Size="Size.Small" /> Wroc do listy
+            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Size="Size.Small" /> Wróć do listy
         </a>
     </div>
 </div>
@@ -31,7 +31,7 @@
                 <div class="form-field required full">
                     <label>Firma / Instytucja</label>
                     <select class="field" @bind="_idFirmy">
-                        <option value="">— wybierz firme —</option>
+                        <option value="">— wybierz firmę —</option>
                         @foreach (var f in _firmy)
                         {
                             <option value="@f.Idfirmy">@f.NazwaFirmy - @f.Miasto</option>
@@ -64,18 +64,18 @@
 
                 <div class="form-field required">
                     <label>Rodzaj praktyki</label>
-                    <input class="field" maxlength="50" @bind="_rodzaj" placeholder="np. Obowiazkowa, Wakacyjna..." />
+                    <input class="field" maxlength="50" @bind="_rodzaj" placeholder="np. Obowiązkowa, Wakacyjna..." />
                 </div>
 
                 <div class="form-field"></div>
 
                 <div class="form-field required">
-                    <label>Data rozpoczecia</label>
+                    <label>Data rozpoczęcia</label>
                     <input class="field" type="date" @bind="_dataRozp" />
                 </div>
 
                 <div class="form-field required">
-                    <label>Data zakonczenia</label>
+                    <label>Data zakończenia</label>
                     <input class="field" type="date" @bind="_dataZak" />
                 </div>
             </div>
@@ -84,7 +84,7 @@
                 <a class="btn btn-text" href="/student">Anuluj</a>
                 <button class="btn btn-primary" @onclick="HandleSubmit" disabled="@(_submitting || !IsValid)">
                     <MudIcon Icon="@Icons.Material.Filled.Send" Size="Size.Small" />
-                    @(_submitting ? "Wysylanie..." : "Wyslij do akceptacji")
+                    @(_submitting ? "Wysyłanie..." : "Wyślij do akceptacji")
                 </button>
             </div>
         }
@@ -133,7 +133,7 @@
         var nrAlbumu = AppState.NrAlbumu;
         if (string.IsNullOrEmpty(nrAlbumu))
         {
-            Snackbar.Add("Brak numeru albumu w kontekscie uzytkownika.", Severity.Error);
+            Snackbar.Add("Brak numeru albumu w kontekście użytkownika.", Severity.Error);
             return;
         }
         if (!IsValid) return;
@@ -154,7 +154,7 @@
                 DateOnly.FromDateTime(_dataZak!.Value),
                 idOsobyParam);
 
-            Snackbar.Add("Praktyka zgloszona - czeka na akceptacje pelnomocnika.", Severity.Success);
+            Snackbar.Add("Praktyka zgłoszona - czeka na akceptację pełnomocnika.", Severity.Success);
             Nav.NavigateTo("/student");
         }
         catch (Microsoft.Data.SqlClient.SqlException ex)
@@ -163,7 +163,7 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Nieoczekiwany blad: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Nieoczekiwany błąd: {ex.Message}", Severity.Error);
         }
         finally
         {

@@ -7,7 +7,7 @@
         <div class="brand-mark"><img src="img/logo.png" alt="PraktykiStud" /></div>
         <div class="brand-text">
             PraktykiStud
-            <small>v3.4 · Politechnika</small>
+            <small>V1.0 · UBB</small>
         </div>
     </a>
 
@@ -65,7 +65,7 @@
 
     private string RoleLabel()
     {
-        if (AppState.IsAdmin) return "Pelnomocnik ds. praktyk";
+        if (AppState.IsAdmin) return "Pełnomocnik ds. praktyk";
         if (AppState.IsStudent) return $"nr albumu {AppState.NrAlbumu}";
         return "";
     }
