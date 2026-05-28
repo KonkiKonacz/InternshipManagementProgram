@@ -14,31 +14,53 @@
             <p class="subtitle">V1.0 - UBB</p>
         </div>
 
-        <p class="page-sub login-sub">Wybierz konto demo, którym chcesz się zalogować.</p>
+        @if (_loggingIn)
+        {
+            <div class="login-loading">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Medium" />
+                <span>Logowanie, trwa wczytywanie panelu...</span>
+            </div>
+        }
+        else
+        {
+            <p class="page-sub login-sub">Wybierz konto demo, którym chcesz się zalogować.</p>
 
-        <div class="actions">
-            <button class="btn btn-primary" @onclick="ZalogujStudenta">
-                <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" />
-                Zaloguj jako student (nr 62753)
-            </button>
-            <button class="btn btn-outlined" @onclick="ZalogujAdmina">
-                <MudIcon Icon="@Icons.Material.Filled.AdminPanelSettings" Size="Size.Small" />
-                Zaloguj jako administrator
-            </button>
-        </div>
+            <div class="actions">
+                <button class="btn btn-primary" @onclick="ZalogujStudenta" disabled="@_loggingIn">
+                    <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" />
+                    Zaloguj jako student (nr 62753)
+                </button>
+                <button class="btn btn-outlined" @onclick="ZalogujAdmina" disabled="@_loggingIn">
+                    <MudIcon Icon="@Icons.Material.Filled.AdminPanelSettings" Size="Size.Small" />
+                    Zaloguj jako administrator
+                </button>
+            </div>
+        }
     </div>
 </div>
 
 @code {
-    private void ZalogujStudenta()
+    private bool _loggingIn;
+
+    private async Task ZalogujStudenta()
     {
         AppState.LoginAsStudent();
-        Nav.NavigateTo("/student");
+        await PokazLadowanieIPrzejdz("/student");
     }
 
-    private void ZalogujAdmina()
+    private async Task ZalogujAdmina()
     {
         AppState.LoginAsAdmin();
-        Nav.NavigateTo("/admin");
+        await PokazLadowanieIPrzejdz("/admin");
+    }
+
+    // Pokazujemy spinner zanim ruszymy do panelu - pierwsze wczytanie (polaczenie z baza,
+    // budowa modelu EF) potrafi zajac 2-3s, wiec okno wyboru nie powinno wisiec bez reakcji.
+    private async Task PokazLadowanieIPrzejdz(string url)
+    {
+        _loggingIn = true;
+        StateHasChanged();
+        await Task.Yield();
+        Nav.NavigateTo(url);
     }
 }
