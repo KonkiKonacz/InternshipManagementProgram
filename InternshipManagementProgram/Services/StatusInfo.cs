@@ -1,7 +1,10 @@
 namespace InternshipManagementProgram.Services;
 
-// Pomocnicze mapowanie statusow z bazy na klasy CSS chipow i etykiety w UI.
-// Statusy w DB: "Zgloszona", "Zatwierdzona", "Odrzucona", "Zakonczona", "Zaliczona", "Niezaliczona".
+/// <summary>
+/// Pomocnicze mapowanie statusow praktyki z bazy na klasy CSS chipow, kolory i
+/// etykiety w UI. Zawiera tez generatory inicjalow i gradientu "logo" firmy.
+/// Statusy w DB: "Zgloszona", "Zatwierdzona", "Odrzucona", "Zakonczona", "Zaliczona", "Niezaliczona".
+/// </summary>
 public static class StatusInfo
 {
     public static string ChipClass(string? status) => status switch

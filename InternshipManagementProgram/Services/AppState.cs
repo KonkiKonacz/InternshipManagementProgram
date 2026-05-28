@@ -1,5 +1,10 @@
 namespace InternshipManagementProgram.Services;
 
+/// <summary>
+/// Przechowuje stan zalogowanego uzytkownika (login, rola, nr albumu) w ramach
+/// jednego obwodu Blazor. Komponenty subskrybuja event Changed, by odswiezyc widok
+/// po zmianie konta. To "udawane" logowanie - nie jest mechanizmem bezpieczenstwa.
+/// </summary>
 public class AppState
 {
     public string? Username { get; private set; }
@@ -12,6 +17,7 @@ public class AppState
 
     public event Action? Changed;
 
+    /// <summary>Loguje jako student z numerem albumu testowego konta demo.</summary>
     public void LoginAsStudent()
     {
         Username = "student";
@@ -20,6 +26,7 @@ public class AppState
         Changed?.Invoke();
     }
 
+    /// <summary>Loguje jako administrator (pelnomocnik ds. praktyk) - bez numeru albumu.</summary>
     public void LoginAsAdmin()
     {
         Username = "admin";
@@ -28,6 +35,7 @@ public class AppState
         Changed?.Invoke();
     }
 
+    /// <summary>Czysci stan sesji i powiadamia komponenty o wylogowaniu.</summary>
     public void Logout()
     {
         Username = null;

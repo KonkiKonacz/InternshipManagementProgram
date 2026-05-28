@@ -5,8 +5,17 @@ using QuestPDF.Infrastructure;
 
 namespace InternshipManagementProgram.Services;
 
+/// <summary>
+/// Generuje zaswiadczenie PDF o odbyciu praktyki studenckiej (QuestPDF).
+/// Dane pobiera z widoku V_PraktykiPelne, ktory laczy informacje o studencie,
+/// firmie, opiekunie i statusie praktyki.
+/// </summary>
 public class CertificateService
 {
+    /// <summary>
+    /// Buduje dokument PDF na podstawie jednego rekordu praktyki i zwraca go
+    /// jako tablice bajtow gotowa do pobrania w przegladarce.
+    /// </summary>
     public byte[] GenerujZaswiadczenie(VPraktykiPelne p)
     {
         var dokument = Document.Create(container =>
